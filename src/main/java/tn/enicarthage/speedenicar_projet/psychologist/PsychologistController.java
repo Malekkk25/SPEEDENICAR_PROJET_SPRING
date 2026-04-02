@@ -177,6 +177,19 @@ private final PsychologistService psychologistService;
         return ResponseEntity.ok(
                 ApiResponse.ok(psychologistService.getStudentsAtRisk(userId)));
     }
+
+    @DeleteMapping("/records/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteRecord(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id) {
+        Long userId = extractUserId(userDetails);
+        psychologistService.deleteRecord(userId, id);
+        return ResponseEntity.ok(
+                ApiResponse.ok(null, "Fiche de suivi supprimée"));
+    }
+
+
+
     private Long extractUserId(UserDetails userDetails) {
         return Long.parseLong(userDetails.getUsername());
     }

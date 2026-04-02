@@ -501,5 +501,25 @@ public class PsychologistService {
                 .updatedAt(r.getUpdatedAt())
                 .build();
     }
+
+    @Transactional
+    public void deleteRecord(Long userId, Long recordId) {
+        PsychologistProfile profile = getProfileByUserId(userId);
+
+        ConfidentialRecord record = recordRepo.findById(recordId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "ConfidentialRecord", "id", recordId));
+
+        if (!record.getPsychologist().getId().equals(profile.getId())) {
+            throw new BusinessException(
+                    "Vous ne pouvez supprimer que vos propres fiches de suivi");
+        }
+
+        record.setDeleted(true);
+        recordRepo.save(record);
+
+        log.info("Confidential record {} soft-deleted by psychologist {}",
+                recordId, profile.getLicenseNumber());
+    }
 }
 
