@@ -1,4 +1,4 @@
-package tn.enicarthage.speedenicar_projet.appointment;
+package tn.enicarthage.speedenicar_projet.module_psychologue.appointment;
 
 
 import jakarta.persistence.*;

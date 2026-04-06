@@ -1,4 +1,4 @@
-package tn.enicarthage.speedenicar_projet.psychologist;
+package tn.enicarthage.speedenicar_projet.module_psychologue;
 
 
 
@@ -7,19 +7,21 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
-import tn.enicarthage.speedenicar_projet.appointment.Appointment;
-import tn.enicarthage.speedenicar_projet.appointment.AppointmentRepository;
+import tn.enicarthage.speedenicar_projet.module_psychologue.appointment.Appointment;
+import tn.enicarthage.speedenicar_projet.module_psychologue.appointment.AppointmentRepository;
 import tn.enicarthage.speedenicar_projet.common.enums.AlertSeverity;
 import tn.enicarthage.speedenicar_projet.common.enums.AppointmentStatus;
 import tn.enicarthage.speedenicar_projet.common.exception.BusinessException;
 import tn.enicarthage.speedenicar_projet.common.exception.ResourceNotFoundException;
-import tn.enicarthage.speedenicar_projet.psychologist.dto.*;
-import tn.enicarthage.speedenicar_projet.psychologist.entity.ConfidentialRecord;
-import tn.enicarthage.speedenicar_projet.psychologist.entity.PsychologistProfile;
-import tn.enicarthage.speedenicar_projet.psychologist.entity.TimeSlot;
-import tn.enicarthage.speedenicar_projet.psychologist.repository.ConfidentialRecordRepository;
-import tn.enicarthage.speedenicar_projet.psychologist.repository.PsychologistProfileRepository;
-import tn.enicarthage.speedenicar_projet.psychologist.repository.TimeSlotRepository;
+import tn.enicarthage.speedenicar_projet.module_psychologue.dto.*;
+import tn.enicarthage.speedenicar_projet.module_psychologue.dto.*;
+import tn.enicarthage.speedenicar_projet.module_psychologue.dto.*;
+import tn.enicarthage.speedenicar_projet.module_psychologue.entity.ConfidentialRecord;
+import tn.enicarthage.speedenicar_projet.module_psychologue.entity.PsychologistProfile;
+import tn.enicarthage.speedenicar_projet.module_psychologue.entity.TimeSlot;
+import tn.enicarthage.speedenicar_projet.module_psychologue.repository.ConfidentialRecordRepository;
+import tn.enicarthage.speedenicar_projet.module_psychologue.repository.PsychologistProfileRepository;
+import tn.enicarthage.speedenicar_projet.module_psychologue.repository.TimeSlotRepository;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.PageRequest;

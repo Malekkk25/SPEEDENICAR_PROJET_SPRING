@@ -1,4 +1,4 @@
-package tn.enicarthage.speedenicar_projet.document;
+package tn.enicarthage.speedenicar_projet.module_psychologue.document;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

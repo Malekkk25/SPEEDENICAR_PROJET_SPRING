@@ -1,4 +1,4 @@
-package tn.enicarthage.speedenicar_projet.psychologist.entity;
+package tn.enicarthage.speedenicar_projet.module_psychologue.entity;
 
 
 import jakarta.persistence.*;

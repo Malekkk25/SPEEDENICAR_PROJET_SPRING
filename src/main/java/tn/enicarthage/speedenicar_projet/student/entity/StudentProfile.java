@@ -2,9 +2,9 @@ package tn.enicarthage.speedenicar_projet.student.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
-import tn.enicarthage.speedenicar_projet.appointment.Appointment;
+import tn.enicarthage.speedenicar_projet.module_psychologue.appointment.Appointment;
 import tn.enicarthage.speedenicar_projet.common.BaseEntity;
-import tn.enicarthage.speedenicar_projet.document.MedicalDocument;
+import tn.enicarthage.speedenicar_projet.module_psychologue.document.MedicalDocument;
 import tn.enicarthage.speedenicar_projet.user.entity.User;
 
 import java.time.LocalDate;

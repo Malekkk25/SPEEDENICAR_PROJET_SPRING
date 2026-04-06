@@ -1,18 +1,24 @@
-package tn.enicarthage.speedenicar_projet.psychologist.dto;
+package tn.enicarthage.speedenicar_projet.module_psychologue.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import tn.enicarthage.speedenicar_projet.common.enums.AlertSeverity;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class RecordResponse {
-    private Long id;
+public class CreateRecordRequest {
+
+    @NotNull(message = "L'identifiant de l'étudiant est obligatoire")
     private Long studentId;
-    private String studentName;
-    private String studentDepartment;
-    private String studentLevel;
+
+    @NotNull(message = "La date de session est obligatoire")
     private LocalDate sessionDate;
+
+    @NotBlank(message = "Les observations sont obligatoires")
     private String observations;
+
     private AlertSeverity riskLevel;
     private String recommendations;
     private Boolean followUpRequired;
@@ -20,6 +26,5 @@ public class RecordResponse {
     private Integer sessionDurationMinutes;
     private String interventions;
     private String studentProgress;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 }
+

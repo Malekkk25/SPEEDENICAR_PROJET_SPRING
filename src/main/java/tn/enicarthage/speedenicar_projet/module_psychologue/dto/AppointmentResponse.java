@@ -1,4 +1,4 @@
-package tn.enicarthage.speedenicar_projet.psychologist.dto;
+package tn.enicarthage.speedenicar_projet.module_psychologue.dto;
 
 import lombok.*;
 import tn.enicarthage.speedenicar_projet.common.enums.AppointmentStatus;

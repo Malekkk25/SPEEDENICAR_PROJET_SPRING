@@ -1,4 +1,4 @@
-package tn.enicarthage.speedenicar_projet.psychologist;
+package tn.enicarthage.speedenicar_projet.module_psychologue;
 
 
 import jakarta.validation.Valid;
@@ -14,7 +14,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import tn.enicarthage.speedenicar_projet.common.dto.ApiResponse;
-import tn.enicarthage.speedenicar_projet.psychologist.dto.*;
+import tn.enicarthage.speedenicar_projet.module_psychologue.dto.*;
+import tn.enicarthage.speedenicar_projet.module_psychologue.dto.*;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.DayOfWeek;

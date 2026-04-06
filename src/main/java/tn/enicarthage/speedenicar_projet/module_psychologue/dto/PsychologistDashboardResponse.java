@@ -1,9 +1,6 @@
-package tn.enicarthage.speedenicar_projet.psychologist.dto;
+package tn.enicarthage.speedenicar_projet.module_psychologue.dto;
 
 import lombok.*;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class PsychologistDashboardResponse {

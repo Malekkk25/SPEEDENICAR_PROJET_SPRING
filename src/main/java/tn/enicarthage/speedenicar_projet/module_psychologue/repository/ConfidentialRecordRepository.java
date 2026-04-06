@@ -1,4 +1,4 @@
-package tn.enicarthage.speedenicar_projet.psychologist.repository;
+package tn.enicarthage.speedenicar_projet.module_psychologue.repository;
 
 
 import org.springframework.data.domain.Page;
@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import tn.enicarthage.speedenicar_projet.common.enums.AlertSeverity;
-import tn.enicarthage.speedenicar_projet.psychologist.entity.ConfidentialRecord;
+import tn.enicarthage.speedenicar_projet.module_psychologue.entity.ConfidentialRecord;
 
 import java.time.LocalDate;
 import java.util.List;
