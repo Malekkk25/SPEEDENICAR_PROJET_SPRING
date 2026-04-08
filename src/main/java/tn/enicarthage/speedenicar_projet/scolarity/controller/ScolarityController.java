@@ -11,14 +11,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import tn.enicarthage.speedenicar_projet.scolarity.dto.request.RejectDocumentRequest;
 import tn.enicarthage.speedenicar_projet.scolarity.dto.response.*;
-import tn.enicarthage.speedenicar_projet.scolarity.entity.AcademicRecord;
 import tn.enicarthage.speedenicar_projet.scolarity.service.ScolarityService;
-import tn.enicarthage.speedenicar_projet.security.UserPrincipal;
-
+import tn.enicarthage.speedenicar_projet.security.service.CustomUserDetails;
+import tn.enicarthage.speedenicar_projet.student.entity.AcademicRecord;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/scolarity")
+@RequestMapping("/api/scolarity")
 @PreAuthorize("hasRole('SCOLARITY')")
 @RequiredArgsConstructor
 public class ScolarityController {
@@ -91,6 +90,6 @@ public class ScolarityController {
     // ── HELPER PRIVÉ ─────────────────────────────────────────────
 
     private Long getAgentId(Authentication auth) {
-        return ((UserPrincipal) auth.getPrincipal()).getId();
+        return ((CustomUserDetails) auth.getPrincipal()).getUserId();
     }
 }

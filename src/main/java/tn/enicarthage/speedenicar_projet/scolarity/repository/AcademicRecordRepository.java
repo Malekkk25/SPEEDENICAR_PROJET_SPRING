@@ -4,7 +4,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import tn.enicarthage.speedenicar_projet.scolarity.entity.AcademicRecord;
+import tn.enicarthage.speedenicar_projet.student.entity.AcademicRecord;
+
 import java.util.List;
 
 @Repository

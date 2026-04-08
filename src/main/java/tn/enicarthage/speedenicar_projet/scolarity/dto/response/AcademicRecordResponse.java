@@ -13,5 +13,5 @@ public class AcademicRecordResponse {
     private String semester;
     private String academicYear;
     private boolean passing;
-    private String comments;
+
 }

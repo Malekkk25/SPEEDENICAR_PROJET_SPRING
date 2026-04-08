@@ -9,11 +9,11 @@ import org.springframework.transaction.annotation.Transactional;
 import tn.enicarthage.speedenicar_projet.common.enums.DocStatus;
 import tn.enicarthage.speedenicar_projet.module_psychologue.document.MedicalDocument;
 import tn.enicarthage.speedenicar_projet.scolarity.dto.response.*;
-import tn.enicarthage.speedenicar_projet.scolarity.entity.AcademicRecord;
 import tn.enicarthage.speedenicar_projet.scolarity.repository.AcademicRecordRepository;
 import tn.enicarthage.speedenicar_projet.student.entity.Absence;
 import tn.enicarthage.speedenicar_projet.student.entity.StudentProfile;
 import tn.enicarthage.speedenicar_projet.user.entity.User;
+import tn.enicarthage.speedenicar_projet.student.entity.AcademicRecord;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -59,7 +59,8 @@ public class ScolarityService {
     // ════════════════════════════════════════════════════════
 
     public List<MedicalDocumentResponse> getPendingDocuments() {
-        return documentRepo.findByStatus(DocStatus.PENDING)
+        return documentRepo.findByStatusAndDeletedFalseOrderByCreatedAtAsc(
+                        DocStatus.PENDING, Pageable.unpaged())
                 .stream()
                 .map(this::toDocumentResponse)
                 .toList();
@@ -255,7 +256,6 @@ public class ScolarityService {
                 .semester(r.getSemester())
                 .academicYear(r.getAcademicYear())
                 .passing(r.isPassing())
-                .comments(r.getComments())
                 .build();
     }
 }
