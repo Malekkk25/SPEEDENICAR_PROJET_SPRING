@@ -11,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import tn.enicarthage.speedenicar_projet.scolarity.dto.request.RejectDocumentRequest;
 import tn.enicarthage.speedenicar_projet.scolarity.dto.response.*;
+import tn.enicarthage.speedenicar_projet.scolarity.service.AcademicAnalysisService;
 import tn.enicarthage.speedenicar_projet.scolarity.service.ScolarityService;
 import tn.enicarthage.speedenicar_projet.security.service.CustomUserDetails;
 import tn.enicarthage.speedenicar_projet.student.entity.AcademicRecord;
@@ -23,7 +24,7 @@ import java.util.List;
 public class ScolarityController {
 
     private final ScolarityService service;
-
+    private final AcademicAnalysisService analysisService;
     // ── DOSSIERS ÉTUDIANTS ────────────────────────────────────────
 
     @GetMapping("/students")
@@ -91,5 +92,17 @@ public class ScolarityController {
 
     private Long getAgentId(Authentication auth) {
         return ((CustomUserDetails) auth.getPrincipal()).getUserId();
+    }
+    // ── ANALYSE IA ──────────────────────────────────
+
+    @PostMapping("/analysis/student/{id}")
+    public ResponseEntity<AcademicAnalysisResult> analyzeStudent(
+            @PathVariable Long id) {
+        return ResponseEntity.ok(analysisService.analyzeStudent(id));
+    }
+
+    @GetMapping("/analysis/at-risk")
+    public ResponseEntity<List<AcademicAnalysisResult>> getAtRiskStudents() {
+        return ResponseEntity.ok(analysisService.analyzeAllAtRisk());
     }
 }

@@ -45,7 +45,7 @@ public class JwtUtils {
                 .claims(extraClaims)
                 .subject(subject)
                 .issuedAt(new Date())
-                //.expiration(new Date(System.currentTimeMillis() + expiration))
+                .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey())
                 .compact();
     }

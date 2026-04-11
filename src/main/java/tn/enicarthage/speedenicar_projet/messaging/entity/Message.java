@@ -40,7 +40,9 @@ public class Message extends BaseEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "read_at")
+    /*@Column(name = "read_at")
+    private LocalDateTime readAt;*/
+    @Column(name = "read_at", columnDefinition = "TEXT")
     private LocalDateTime readAt;
 
     @Column(name = "is_read", nullable = false)

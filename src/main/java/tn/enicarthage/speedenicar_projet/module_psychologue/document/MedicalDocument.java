@@ -51,7 +51,9 @@ public class MedicalDocument extends BaseEntity {
     @JoinColumn(name = "validated_by")
     private User validatedBy;
 
-    @Column(name = "validation_date")
+    /*@Column(name = "validation_date")
+    private LocalDateTime validationDate;*/
+    @Column(name = "validation_date", columnDefinition = "TEXT")
     private LocalDateTime validationDate;
 
     @Column(name = "rejection_reason", length = 500)

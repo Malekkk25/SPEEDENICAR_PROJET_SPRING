@@ -35,7 +35,9 @@ public class Appointment extends BaseEntity {
     private User psychologist;
 
     @NotNull
-    @Column(name = "date_time", nullable = false)
+    /*@Column(name = "date_time", nullable = false)
+    private LocalDateTime dateTime;*/
+    @Column(name = "date_time", nullable = false, columnDefinition = "TEXT")
     private LocalDateTime dateTime;
 
     @Column(nullable = false)

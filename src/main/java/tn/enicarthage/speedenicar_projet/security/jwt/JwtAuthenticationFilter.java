@@ -38,10 +38,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (jwt != null && jwtUtils.validateToken(jwt)) {
                 String email = jwtUtils.extractEmail(jwt);
+                log.info("JWT email extrait: {}", email);//cela
 
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                log.info("User chargé: {}", userDetails.getUsername());  // ← et celle-là
 
                 if (jwtUtils.isTokenValid(jwt, userDetails)) {
+                    log.info("Token valide !");  // ← et celle-là
+
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
                                     userDetails,

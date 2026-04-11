@@ -27,11 +27,11 @@ public class Absence extends BaseEntity {
     private StudentProfile student;
 
     @NotNull
-    @Column(name = "start_date", nullable = false)
+    @Column(name = "start_date", nullable = false, columnDefinition = "TEXT")
     private LocalDate startDate;
 
     @NotNull
-    @Column(name = "end_date", nullable = false)
+    @Column(name = "end_date", nullable = false, columnDefinition = "TEXT")
     private LocalDate endDate;
 
     @Column(length = 300)

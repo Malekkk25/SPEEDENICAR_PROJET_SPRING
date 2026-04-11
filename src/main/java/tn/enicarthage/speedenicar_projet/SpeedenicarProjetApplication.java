@@ -9,5 +9,4 @@ public class SpeedenicarProjetApplication {
     public static void main(String[] args) {
         SpringApplication.run(SpeedenicarProjetApplication.class, args);
     }
-
 }

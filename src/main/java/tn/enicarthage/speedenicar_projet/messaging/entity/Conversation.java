@@ -30,8 +30,10 @@ public class Conversation extends BaseEntity {
     @JoinColumn(name = "participant_two_id", nullable = false)
     private User participantTwo;
 
-    @Column(name = "last_message_at")
-    private LocalDateTime lastMessageAt;
+   /* @Column(name = "last_message_at")
+    private LocalDateTime lastMessageAt;*/
+   @Column(name = "last_message_at", columnDefinition = "TEXT")
+   private LocalDateTime lastMessageAt;
 
     @Column(name = "last_message_preview", length = 255)
     private String lastMessagePreview;

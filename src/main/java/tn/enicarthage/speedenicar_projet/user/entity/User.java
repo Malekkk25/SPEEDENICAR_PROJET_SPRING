@@ -64,7 +64,9 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private Boolean enabled = true;
 
-    @Column(name = "last_login")
+    /*@Column(name = "last_login")
+    private LocalDateTime lastLogin;*/
+    @Column(name = "last_login", columnDefinition = "TEXT")
     private LocalDateTime lastLogin;
 
     @OneToOne(

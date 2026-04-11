@@ -47,7 +47,9 @@ public class Notification extends BaseEntity {
     @Builder.Default
     private Boolean read = false;
 
-    @Column(name = "read_at")
+    /*@Column(name = "read_at")
+    private LocalDateTime readAt;*/
+    @Column(name = "read_at", columnDefinition = "TEXT")
     private LocalDateTime readAt;
 
     @Column(length = 500)
