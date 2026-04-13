@@ -1,6 +1,5 @@
 package tn.enicarthage.speedenicar_projet.security.jwt;
 
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,28 +33,55 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         try {
+
             String jwt = parseJwt(request);
 
-            if (jwt != null && jwtUtils.validateToken(jwt)) {
-                String email = jwtUtils.extractEmail(jwt);
-
-                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-
-                if (jwtUtils.isTokenValid(jwt, userDetails)) {
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    userDetails,
-                                    null,
-                                    userDetails.getAuthorities());
-
-                    authentication.setDetails(
-                            new WebAuthenticationDetailsSource().buildDetails(request));
-
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                }
+            if (jwt == null) {
+                log.debug("[JWT] Aucun token dans la requête: {}", request.getServletPath());
+                filterChain.doFilter(request, response);
+                return;
             }
+
+            log.debug("[JWT] Token reçu pour: {}", request.getServletPath());
+
+            boolean valid = jwtUtils.validateToken(jwt);
+            log.debug("[JWT] validateToken = {}", valid);
+
+            if (!valid) {
+                log.warn("[JWT] Token invalide ou expiré pour: {}", request.getServletPath());
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            String email = jwtUtils.extractEmail(jwt);
+            log.debug("[JWT] Email extrait: {}", email);
+
+            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+            log.debug("[JWT] UserDetails chargé: {}, authorities: {}",
+                    userDetails.getUsername(), userDetails.getAuthorities());
+
+            if (jwtUtils.isTokenValid(jwt, userDetails)) {
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails,
+                                null,
+                                userDetails.getAuthorities());
+
+                authentication.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request));
+
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                log.debug("[JWT] Authentification OK pour: {}", email);
+            } else {
+                log.warn("[JWT] isTokenValid = false pour: {}", email);
+            }
+
         } catch (Exception e) {
-            log.error("Impossible de définir l'authentification: {}", e.getMessage());
+            // Log complet avec la cause racine
+            log.error("[JWT] ERREUR: {} — {}", e.getClass().getSimpleName(), e.getMessage());
+            if (e.getCause() != null) {
+                log.error("[JWT] Cause: {}", e.getCause().getMessage());
+            }
         }
 
         filterChain.doFilter(request, response);

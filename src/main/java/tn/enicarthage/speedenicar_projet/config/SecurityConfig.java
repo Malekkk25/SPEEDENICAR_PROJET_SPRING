@@ -71,6 +71,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/profile/**").authenticated()
                         .requestMatchers("/api/notifications/**").authenticated()
                         .requestMatchers("/api/messages/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/consultations").permitAll()
+                        .requestMatchers("/api/consultations/**").permitAll()
+                        .requestMatchers("/api/notifications/**").authenticated()
+                        .requestMatchers("/api/messages/**").authenticated()
+
+
 
                         .anyRequest().authenticated()
                 )
