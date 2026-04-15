@@ -1,41 +1,21 @@
 package tn.enicarthage.speedenicar_projet.module_psychologue.consultation.listener;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
 import tn.enicarthage.speedenicar_projet.module_psychologue.consultation.ConsultationSession;
 import tn.enicarthage.speedenicar_projet.module_psychologue.consultation.ConsultationSessionCreatedEvent;
+import tn.enicarthage.speedenicar_projet.notification.dto.NotificationPayload;
+import tn.enicarthage.speedenicar_projet.notification.service.EmailService;
+import tn.enicarthage.speedenicar_projet.notification.service.NotificationDispatchService;
+import tn.enicarthage.speedenicar_projet.user.entity.User;
+import tn.enicarthage.speedenicar_projet.common.enums.NotificationType;
 
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
-// ── 2. Imports Spring Framework ─────────────────────────────────────────────
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
-
-// ── 3. Imports Lombok ───────────────────────────────────────────────────────
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
-// ── 4. Imports liés à votre module Consultation (déjà présents) ─────────────
-import tn.enicarthage.speedenicar_projet.module_psychologue.consultation.ConsultationSession;
-import tn.enicarthage.speedenicar_projet.module_psychologue.consultation.ConsultationSessionCreatedEvent;
-
-// ── 5. Imports spécifiques à votre projet (À ADAPTER SELON VOS PACKAGES) ────
-// Import de l'entité User
-import tn.enicarthage.speedenicar_projet.notification.dto.NotificationPayload;
-import tn.enicarthage.speedenicar_projet.notification.service.EmailService;
-import tn.enicarthage.speedenicar_projet.user.entity.User;
-
-// Imports des services de notification et d'email
-import tn.enicarthage.speedenicar_projet.notification.service.NotificationDispatchService; // Exemple
-
-// Exemple
-
-/**
- * Écoute ConsultationSessionCreatedEvent et déclenche :
- *  1. Notification WebSocket temps réel → étudiant
- *  2. Email HTML → étudiant (avec lien de la salle)
- *  3. Email HTML → psychologue (confirmation de création)
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -52,10 +32,10 @@ public class ConsultationNotificationListener {
     public void onSessionCreated(ConsultationSessionCreatedEvent event) {
         ConsultationSession session = event.getSession();
 
-        User student     = session.getAppointment().getStudent().getUser();
+        User student = session.getAppointment().getStudent().getUser();
         User psychologist = session.getAppointment().getPsychologist();
-        String roomUrl   = "/consultation/room/" + session.getRoomId();
-        String dateTime  = session.getAppointment().getDateTime().format(DATE_FMT);
+        String roomUrl = "/consultation/room/" + session.getRoomId();
+        String dateTime = session.getAppointment().getDateTime().format(DATE_FMT);
 
         log.info("Envoi notifications pour session roomId={}", session.getRoomId());
 
@@ -66,7 +46,7 @@ public class ConsultationNotificationListener {
                         .message(String.format(
                                 "Votre consultation avec %s %s est prête. Cliquez pour rejoindre.",
                                 psychologist.getFirstName(), psychologist.getLastName()))
-                        .type(NotificationPayload.NotificationType.CONSULTATION_SESSION_READY)
+                        .type(NotificationType.APPOINTMENT)
                         .actionUrl(roomUrl)
                         .data(Map.of(
                                 "roomId", session.getRoomId(),
@@ -83,7 +63,7 @@ public class ConsultationNotificationListener {
                         .message(String.format(
                                 "La salle pour votre consultation avec %s %s est prête.",
                                 student.getFirstName(), student.getLastName()))
-                        .type(NotificationPayload.NotificationType.CONSULTATION_SESSION_READY)
+                        .type(NotificationType.APPOINTMENT)
                         .actionUrl(roomUrl)
                         .data(Map.of(
                                 "roomId", session.getRoomId(),
@@ -96,13 +76,13 @@ public class ConsultationNotificationListener {
         emailService.sendHtml(
                 student.getEmail(),
                 "📹 Votre consultation vidéo est prête — SPEED",
-                "consultation-ready-student",
+                "emails/consultation-ready-student", // CORRECTION ICI
                 Map.of(
-                        "studentFirstName",     student.getFirstName(),
-                        "psychologistFullName",  psychologist.getFirstName() + " " + psychologist.getLastName(),
-                        "appointmentDateTime",   dateTime,
-                        "roomUrl",               "https://speed-platform.dz" + roomUrl,
-                        "roomId",                session.getRoomId()
+                        "studentFirstName", student.getFirstName(),
+                        "psychologistFullName", psychologist.getFirstName() + " " + psychologist.getLastName(),
+                        "appointmentDateTime", dateTime,
+                        "roomUrl", "http://localhost:4200" + roomUrl,
+                        "roomId", session.getRoomId()
                 )
         );
 
@@ -110,13 +90,13 @@ public class ConsultationNotificationListener {
         emailService.sendHtml(
                 psychologist.getEmail(),
                 "✅ Salle de consultation créée — SPEED",
-                "consultation-ready-psychologist",
+                "emails/consultation-ready-psychologist", // CORRECTION ICI
                 Map.of(
                         "psychologistFirstName", psychologist.getFirstName(),
-                        "studentFullName",        student.getFirstName() + " " + student.getLastName(),
-                        "appointmentDateTime",    dateTime,
-                        "roomUrl",                "https://speed-platform.dz" + roomUrl,
-                        "roomId",                 session.getRoomId()
+                        "studentFullName", student.getFirstName() + " " + student.getLastName(),
+                        "appointmentDateTime", dateTime,
+                        "roomUrl", "http://localhost:4200" + roomUrl,
+                        "roomId", session.getRoomId()
                 )
         );
     }

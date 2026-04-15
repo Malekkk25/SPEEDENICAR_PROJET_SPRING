@@ -2,6 +2,7 @@ package tn.enicarthage.speedenicar_projet.module_psychologue.consultation;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.enicarthage.speedenicar_projet.common.enums.AppointmentStatus;
@@ -12,6 +13,7 @@ import tn.enicarthage.speedenicar_projet.user.entity.User;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -21,6 +23,9 @@ public class ConsultationService {
 
     private final ConsultationSessionRepository sessionRepository;
     private final AppointmentRepository appointmentRepository;
+
+    // 1. AJOUT : L'injecteur d'événements pour notifier le reste de l'application
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * Le psychologue cree la salle de consultation avant le RDV.
@@ -45,24 +50,31 @@ public class ConsultationService {
                     "Le rendez-vous doit etre confirme pour demarrer une consultation");
         }
 
-        // Verifier qu'une session n'existe pas deja
-        sessionRepository.findByAppointmentId(appointmentId).ifPresent(s -> {
-            throw new org.springframework.web.server.ResponseStatusException(
-                    org.springframework.http.HttpStatus.BAD_REQUEST,
-                    "Une session existe deja pour ce rendez-vous (roomId: " + s.getRoomId() + ")");
-        });
+        // 2. CORRECTION : Au lieu de lever une erreur si la session existe, on la renvoie
+        Optional<ConsultationSession> existingSession = sessionRepository.findByAppointmentId(appointmentId);
+        if (existingSession.isPresent()) {
+            log.info("Session déjà existante pour appointmentId={}, renvoi direct", appointmentId);
+            return toResponse(existingSession.get());
+        }
 
         ConsultationSession session = ConsultationSession.builder()
                 .appointment(appointment)
                 .roomId(UUID.randomUUID().toString())
-                // CORRECTION ICI : ConsultationSession.SessionStatus
                 .status(ConsultationSession.SessionStatus.WAITING)
                 .build();
 
         session = sessionRepository.save(session);
-        log.info("Session de consultation creee: roomId={}, appointmentId={}", session.getRoomId(), appointmentId);
 
-        return toResponse(session);
+        ConsultationSession fullyLoadedSession = sessionRepository.findByRoomId(session.getRoomId())
+                .orElseThrow(() -> new ResourceNotFoundException("Erreur de rechargement session"));
+
+        log.info("📢 Événement déclenché pour l'étudiant: {}",
+                fullyLoadedSession.getAppointment().getStudent().getUser().getEmail());
+
+// On envoie la version "chargée" à l'événement
+        eventPublisher.publishEvent(new ConsultationSessionCreatedEvent(this, fullyLoadedSession));
+
+        return toResponse(fullyLoadedSession);
     }
 
     /**
@@ -100,7 +112,6 @@ public class ConsultationService {
 
         checkParticipant(session, currentUser);
 
-        // Attention : getStudent() retourne un StudentProfile, donc pour avoir l'ID utilisateur c'est getStudent().getUser().getId()
         Long studentUserId = session.getAppointment().getStudent().getUser().getId();
         boolean isStudent = currentUser.getId().equals(studentUserId);
 
@@ -110,8 +121,6 @@ public class ConsultationService {
             session.setPsychologistJoinedAt(LocalDateTime.now());
         }
 
-        // Si les deux sont connectes -> passer en ACTIVE
-        // CORRECTION ICI : ConsultationSession.SessionStatus
         if (session.getStudentJoinedAt() != null && session.getPsychologistJoinedAt() != null
                 && session.getStatus() == ConsultationSession.SessionStatus.WAITING) {
             session.setStatus(ConsultationSession.SessionStatus.ACTIVE);
@@ -132,7 +141,6 @@ public class ConsultationService {
 
         checkParticipant(session, currentUser);
 
-        // CORRECTION ICI : ConsultationSession.SessionStatus
         if (session.getStatus() == ConsultationSession.SessionStatus.ENDED) {
             return toResponse(session);
         }
@@ -144,7 +152,6 @@ public class ConsultationService {
             session.setDurationMinutes((int) ChronoUnit.MINUTES.between(session.getStartedAt(), session.getEndedAt()));
         }
 
-        // Marquer le RDV comme COMPLETED
         Appointment appointment = session.getAppointment();
         appointment.setStatus(AppointmentStatus.COMPLETED);
 
@@ -155,7 +162,6 @@ public class ConsultationService {
     // --- Helpers ---
 
     private void checkParticipant(ConsultationSession session, User user) {
-        // Attention : getStudent() retourne un StudentProfile, donc pour avoir l'ID utilisateur c'est getStudent().getUser().getId()
         Long studentUserId = session.getAppointment().getStudent().getUser().getId();
         Long psychUserId = session.getAppointment().getPsychologist().getId();
         if (!user.getId().equals(studentUserId) && !user.getId().equals(psychUserId)) {
@@ -166,7 +172,6 @@ public class ConsultationService {
     }
 
     private ConsultationDto.SessionResponse toResponse(ConsultationSession s) {
-        // On récupère l'objet User à l'intérieur du profil étudiant
         var studentUser = s.getAppointment().getStudent().getUser();
         var psych = s.getAppointment().getPsychologist();
 
@@ -176,7 +181,7 @@ public class ConsultationService {
                 .status(s.getStatus())
                 .appointmentId(s.getAppointment().getId())
                 .student(ConsultationDto.ParticipantInfo.builder()
-                        .userId(studentUser.getId()) // ID de l'utilisateur
+                        .userId(studentUser.getId())
                         .fullName(studentUser.getFirstName() + " " + studentUser.getLastName())
                         .avatarUrl(studentUser.getAvatarUrl())
                         .joined(s.getStudentJoinedAt() != null)

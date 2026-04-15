@@ -2,6 +2,7 @@ package tn.enicarthage.speedenicar_projet.notification.dto;
 
 import lombok.Builder;
 import lombok.Data;
+import tn.enicarthage.speedenicar_projet.common.enums.NotificationType;
 
 import java.time.LocalDateTime;
 
@@ -9,12 +10,7 @@ import java.time.LocalDateTime;
 @Builder
 public class NotificationPayload {
 
-    public enum NotificationType {
-        CONSULTATION_SESSION_READY,   // Salle vidéo ouverte
-        CONSULTATION_SESSION_STARTED, // Les deux participants connectés
-        CONSULTATION_SESSION_ENDED,   // Session terminée
-        APPOINTMENT_REMINDER          // (futur)
-    }
+
 
     private Long        id;
     private String      title;

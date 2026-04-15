@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<!-- src/main/resources/templates/emails/consultation-ready-student.html -->
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Votre consultation vidéo est prête</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+          font-family: 'Segoe UI', Arial, sans-serif;
+          background: #f0f4f8;
+          color: #1a202c;
+        }
+        .wrapper {
+          max-width: 600px;
+          margin: 32px auto;
+          background: #ffffff;
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        }
+        /* ── Header ── */
+        .header {
+          background: linear-gradient(135deg, #1565C0 0%, #0D47A1 100%);
+          padding: 40px 32px 32px;
+          text-align: center;
+        }
+        .header .logo {
+          font-size: 28px;
+          font-weight: 800;
+          color: #fff;
+          letter-spacing: 3px;
+        }
+        .header .logo span { color: #90CAF9; }
+        .header .subtitle {
+          font-size: 13px;
+          color: rgba(255,255,255,0.7);
+          margin-top: 4px;
+          letter-spacing: 1px;
+        }
+        /* ── Badge vidéo ── */
+        .video-badge {
+          background: #E3F2FD;
+          border: 2px solid #1565C0;
+          border-radius: 50px;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 20px;
+          margin: 24px auto 0;
+          font-size: 14px;
+          font-weight: 600;
+          color: #1565C0;
+        }
+        .video-icon {
+          width: 20px;
+          height: 20px;
+          background: #1565C0;
+          border-radius: 50%;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          color: #fff;
+          font-size: 11px;
+        }
+        /* ── Body ── */
+        .body { padding: 36px 32px; }
+        .greeting {
+          font-size: 20px;
+          font-weight: 700;
+          color: #1a202c;
+          margin-bottom: 16px;
+        }
+        .body p {
+          font-size: 15px;
+          color: #4a5568;
+          line-height: 1.7;
+          margin-bottom: 12px;
+        }
+        /* ── Info Card ── */
+        .info-card {
+          background: #F7FAFC;
+          border-left: 4px solid #1565C0;
+          border-radius: 8px;
+          padding: 16px 20px;
+          margin: 24px 0;
+        }
+        .info-card .info-row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 6px 0;
+          font-size: 14px;
+          color: #2d3748;
+        }
+        .info-card .info-row .label {
+          font-weight: 600;
+          min-width: 130px;
+          color: #718096;
+        }
+        /* ── CTA Button ── */
+        .cta-wrapper { text-align: center; margin: 32px 0; }
+        .cta-btn {
+          display: inline-block;
+          background: linear-gradient(135deg, #1565C0, #0D47A1);
+          color: #ffffff !important;
+          text-decoration: none;
+          padding: 16px 40px;
+          border-radius: 50px;
+          font-size: 16px;
+          font-weight: 700;
+          letter-spacing: 0.5px;
+          box-shadow: 0 4px 16px rgba(21,101,192,0.4);
+        }
+        /* ── Warning ── */
+        .warning {
+          background: #FFF8E1;
+          border: 1px solid #FFE082;
+          border-radius: 8px;
+          padding: 14px 18px;
+          font-size: 13px;
+          color: #795548;
+          margin-top: 20px;
+          line-height: 1.6;
+        }
+        /* ── Footer ── */
+        .footer {
+          background: #F7FAFC;
+          padding: 24px 32px;
+          text-align: center;
+          font-size: 12px;
+          color: #a0aec0;
+          border-top: 1px solid #E2E8F0;
+        }
+        .footer a { color: #1565C0; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">SP<span>EE</span>D</div>
+        <div class="subtitle">Suivi du Parcours Étudiant, Engagement et Développement</div>
+        <div class="video-badge">
+            <span class="video-icon">▶</span>
+            Consultation Vidéo Disponible
+        </div>
+    </div>
+
+    <!-- Body -->
+    <div class="body">
+        <div class="greeting">Bonjour <span th:text="${studentFirstName}">Étudiant</span> 👋</div>
+
+        <p>
+            Votre psychologue <strong th:text="${psychologistFullName}">Dr. Nom</strong>
+            vient d'ouvrir la salle de consultation vidéo pour votre rendez-vous.
+        </p>
+        <p>Vous pouvez rejoindre l'appel dès maintenant en cliquant sur le bouton ci-dessous.</p>
+
+        <!-- Infos RDV -->
+        <div class="info-card">
+            <div class="info-row">
+                <span class="label">📅 Date et heure</span>
+                <span th:text="${appointmentDateTime}">01/01/2026 à 10:00</span>
+            </div>
+            <div class="info-row">
+                <span class="label">👨‍⚕️ Psychologue</span>
+                <span th:text="${psychologistFullName}">Dr. Nom Prénom</span>
+            </div>
+            <div class="info-row">
+                <span class="label">🔑 ID de la salle</span>
+                <code th:text="${roomId}">xxxxxxxx-xxxx</code>
+            </div>
+        </div>
+
+        <!-- Bouton CTA -->
+        <div class="cta-wrapper">
+            <a th:href="${roomUrl}" class="cta-btn">
+                📹 Rejoindre la consultation
+            </a>
+        </div>
+
+        <!-- Avertissement -->
+        <div class="warning">
+            ⚠️ <strong>Avant de rejoindre :</strong> assurez-vous d'être dans un endroit calme et privé.
+            Autorisez l'accès à votre caméra et microphone lorsque le navigateur vous le demande.
+            Cette consultation est confidentielle.
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>Cet email a été envoyé automatiquement par la plateforme SPEED.</p>
+        <p style="margin-top:6px">
+            Si vous avez des problèmes, contactez
+            <a href="mailto:support@speed-platform.dz">support@speed-platform.dz</a>
+        </p>
+        <p style="margin-top:12px; color:#CBD5E0">
+            © 2026 SPEED Platform — Tous droits réservés
+        </p>
+    </div>
+
+</div>
+</body>
+</html>

@@ -5,5 +5,6 @@ public enum NotificationType {
     ALERT,
     SYSTEM,
     MESSAGE,
-    DOCUMENT
+    DOCUMENT,
+    CONSULTATION_SESSION_READY
 }
