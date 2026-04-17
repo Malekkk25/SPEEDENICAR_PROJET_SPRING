@@ -16,6 +16,7 @@ import tn.enicarthage.speedenicar_projet.scolarity.service.ScolarityService;
 import tn.enicarthage.speedenicar_projet.security.service.CustomUserDetails;
 import tn.enicarthage.speedenicar_projet.student.entity.AcademicRecord;
 import java.util.List;
+import tn.enicarthage.speedenicar_projet.scolarity.dto.request.CreateStudentRequest;
 
 @RestController
 @RequestMapping("/api/scolarity")
@@ -37,6 +38,11 @@ public class ScolarityController {
     public ResponseEntity<StudentDossierResponse> getStudent(
             @PathVariable Long id) {
         return ResponseEntity.ok(service.getStudentById(id));
+    }
+    @PostMapping("/students")
+    public ResponseEntity<StudentDossierResponse> createStudent(
+            @Valid @RequestBody CreateStudentRequest request) {
+        return ResponseEntity.ok(service.createStudent(request));
     }
 
     // ── DOCUMENTS MÉDICAUX ───────────────────────────────────────
@@ -70,6 +76,13 @@ public class ScolarityController {
     public ResponseEntity<List<AbsenceResponse>> getProlongedAbsences(
             @RequestParam(defaultValue = "3") int days) {
         return ResponseEntity.ok(service.getProlongedAbsences(days));
+
+    }
+    @PutMapping("/absences/{id}/justify")
+    public ResponseEntity<AbsenceResponse> justifyAbsence(
+            @PathVariable Long id,
+            @RequestParam boolean justified) {
+        return ResponseEntity.ok(service.justifyAbsence(id, justified));
     }
 
     // ── NOTES ACADÉMIQUES ────────────────────────────────────────

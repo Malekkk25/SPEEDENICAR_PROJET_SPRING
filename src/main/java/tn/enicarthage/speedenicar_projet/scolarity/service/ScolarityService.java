@@ -18,7 +18,9 @@ import tn.enicarthage.speedenicar_projet.student.entity.AcademicRecord;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.NoSuchElementException;
-
+import tn.enicarthage.speedenicar_projet.common.enums.Role;
+import tn.enicarthage.speedenicar_projet.scolarity.dto.request.CreateStudentRequest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 // ⚠️ Ces repositories viennent du code de ton amie —
 //    remplace par les vrais imports quand tu vois leurs noms exacts
 import tn.enicarthage.speedenicar_projet.module_psychologue.document.MedicalDocumentRepository;
@@ -37,7 +39,7 @@ public class ScolarityService {
     private final AbsenceRepository          absenceRepo;
     private final AcademicRecordRepository   academicRepo;
     private final UserRepository             userRepo;
-
+    private final PasswordEncoder passwordEncoder;
     // ════════════════════════════════════════════════════════
     // DOSSIERS ÉTUDIANTS
     // ════════════════════════════════════════════════════════
@@ -52,6 +54,36 @@ public class ScolarityService {
                 .orElseThrow(() -> new NoSuchElementException(
                         "Étudiant introuvable avec l'id : " + id));
         return toStudentDossierFull(student);
+    }
+
+    @Transactional
+    public StudentDossierResponse createStudent(CreateStudentRequest req) {
+        if (userRepo.existsByEmail(req.getEmail())) {
+            throw new IllegalArgumentException("Email déjà utilisé : " + req.getEmail());
+        }
+        if (studentRepo.existsByStudentId(req.getStudentId())) {
+            throw new IllegalArgumentException("Numéro étudiant déjà utilisé : " + req.getStudentId());
+        }
+
+        User user = new User();
+        user.setEmail(req.getEmail());
+        user.setFirstName(req.getFirstName());
+        user.setLastName(req.getLastName());
+        user.setPassword(passwordEncoder.encode("Student123!"));
+        user.setRole(Role.STUDENT);
+        user.setEnabled(true);
+        User savedUser = userRepo.save(user);
+
+        StudentProfile profile = new StudentProfile();
+        profile.setUser(savedUser);
+        profile.setStudentId(req.getStudentId());
+        profile.setDepartment(req.getDepartment());
+        profile.setLevel(req.getLevel());
+        profile.setEnrollmentYear(req.getEnrollmentYear());
+        StudentProfile savedProfile = studentRepo.save(profile);
+
+        log.info("Étudiant créé : {}", req.getEmail());
+        return toStudentDossierLight(savedProfile);
     }
 
     // ════════════════════════════════════════════════════════
@@ -128,6 +160,15 @@ public class ScolarityService {
                         a.getStartDate().isBefore(threshold))
                 .map(this::toAbsenceResponse)
                 .toList();
+    }
+    @Transactional
+    public AbsenceResponse justifyAbsence(Long absenceId, boolean justified) {
+        Absence absence = absenceRepo.findById(absenceId)
+                .orElseThrow(() -> new NoSuchElementException("Absence introuvable : " + absenceId));
+        absence.setJustified(justified);
+        absenceRepo.save(absence);
+        log.info("Absence {} marquée comme {}", absenceId, justified ? "justifiée" : "non justifiée");
+        return toAbsenceResponse(absence);
     }
 
     // ════════════════════════════════════════════════════════
