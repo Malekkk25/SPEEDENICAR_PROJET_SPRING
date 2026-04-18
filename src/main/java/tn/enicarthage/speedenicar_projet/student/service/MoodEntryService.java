@@ -28,7 +28,7 @@ public class MoodEntryService {
         StudentProfile student = getStudentByUserId(userId);
 
         // Vérifier qu'il n'y a pas déjà une entrée pour aujourd'hui
-        if (moodEntryRepository.existsByStudentIdAndDate(student.getId(), moodEntry.getDate())) {
+        if (moodEntryRepository.existsByStudentIdAndDateAndDeletedFalse(student.getId(), moodEntry.getDate())) {
             throw new IllegalStateException("Une entrée d'humeur existe déjà pour aujourd'hui");
         }
 
