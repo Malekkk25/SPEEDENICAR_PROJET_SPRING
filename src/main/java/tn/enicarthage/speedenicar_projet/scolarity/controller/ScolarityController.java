@@ -17,6 +17,8 @@ import tn.enicarthage.speedenicar_projet.security.service.CustomUserDetails;
 import tn.enicarthage.speedenicar_projet.student.entity.AcademicRecord;
 import java.util.List;
 import tn.enicarthage.speedenicar_projet.scolarity.dto.request.CreateStudentRequest;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.MediaType;
 
 @RestController
 @RequestMapping("/api/scolarity")
@@ -39,6 +41,7 @@ public class ScolarityController {
             @PathVariable Long id) {
         return ResponseEntity.ok(service.getStudentById(id));
     }
+
     @PostMapping("/students")
     public ResponseEntity<StudentDossierResponse> createStudent(
             @Valid @RequestBody CreateStudentRequest request) {
@@ -78,6 +81,7 @@ public class ScolarityController {
         return ResponseEntity.ok(service.getProlongedAbsences(days));
 
     }
+
     @PutMapping("/absences/{id}/justify")
     public ResponseEntity<AbsenceResponse> justifyAbsence(
             @PathVariable Long id,
@@ -117,5 +121,17 @@ public class ScolarityController {
     @GetMapping("/analysis/at-risk")
     public ResponseEntity<List<AcademicAnalysisResult>> getAtRiskStudents() {
         return ResponseEntity.ok(analysisService.analyzeAllAtRisk());
+    }
+
+    @PostMapping(value = "/documents/upload/{studentId}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<MedicalDocumentResponse> uploadDocument(
+            @PathVariable Long studentId,
+            @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(service.uploadDocument(studentId, file));
+    }
+    @GetMapping("/documents/all")
+    public ResponseEntity<List<MedicalDocumentResponse>> getAllDocuments() {
+        return ResponseEntity.ok(service.getAllDocuments());
     }
 }

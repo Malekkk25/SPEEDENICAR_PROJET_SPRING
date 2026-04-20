@@ -14,7 +14,7 @@ public interface MedicalDocumentRepository extends JpaRepository<MedicalDocument
 
     Page<MedicalDocument> findByStatusAndDeletedFalseOrderByCreatedAtAsc(
             DocStatus status, Pageable pageable);
-
+    java.util.List<MedicalDocument> findByStatus(DocStatus status);
     long countByStatusAndDeletedFalse(DocStatus status);
 
     long countByStudentIdAndStatusAndDeletedFalse(Long studentId, DocStatus status);

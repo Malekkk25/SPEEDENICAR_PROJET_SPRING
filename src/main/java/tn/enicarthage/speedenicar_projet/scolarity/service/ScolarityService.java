@@ -28,12 +28,24 @@ import tn.enicarthage.speedenicar_projet.student.repository.StudentProfileReposi
 import tn.enicarthage.speedenicar_projet.student.repository.AbsenceRepository;
 import tn.enicarthage.speedenicar_projet.user.repository.UserRepository;
 
+
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.beans.factory.annotation.Value;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
+
+
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 @Transactional(readOnly = true)
 public class ScolarityService {
-
+    @Value("${speed.file.upload-dir:./uploads}")
+    private String uploadDir;
     private final MedicalDocumentRepository  documentRepo;
     private final StudentProfileRepository   studentRepo;
     private final AbsenceRepository          absenceRepo;
@@ -43,7 +55,42 @@ public class ScolarityService {
     // ════════════════════════════════════════════════════════
     // DOSSIERS ÉTUDIANTS
     // ════════════════════════════════════════════════════════
+    @Transactional
+    public MedicalDocumentResponse uploadDocument(Long studentId, MultipartFile file) {
+        StudentProfile student = studentRepo.findById(studentId)
+                .orElseThrow(() -> new NoSuchElementException("Étudiant introuvable : " + studentId));
 
+        try {
+            Path uploadPath = Paths.get(uploadDir);
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+
+            String originalName = file.getOriginalFilename();
+            String extension = originalName != null && originalName.contains(".")
+                    ? originalName.substring(originalName.lastIndexOf("."))
+                    : "";
+            String fileName = UUID.randomUUID() + extension;
+            Path filePath = uploadPath.resolve(fileName);
+            Files.copy(file.getInputStream(), filePath);
+
+            MedicalDocument doc = MedicalDocument.builder()
+                    .student(student)
+                    .fileName(originalName)
+                    .fileType(file.getContentType())
+                    .filePath(filePath.toString())
+                    .fileSize(file.getSize())
+                    .status(DocStatus.PENDING)
+                    .build();
+
+            documentRepo.save(doc);
+            log.info("Document uploadé pour étudiant {}", studentId);
+            return toDocumentResponse(doc);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Erreur lors de l'upload : " + e.getMessage());
+        }
+    }
     public Page<StudentDossierResponse> getAllStudents(Pageable pageable) {
         return studentRepo.findAll(pageable)
                 .map(this::toStudentDossierLight);
@@ -298,5 +345,12 @@ public class ScolarityService {
                 .academicYear(r.getAcademicYear())
                 .passing(r.isPassing())
                 .build();
+    }
+    public List<MedicalDocumentResponse> getAllDocuments() {
+        return documentRepo.findAll()
+                .stream()
+                .filter(d -> Boolean.FALSE.equals(d.getDeleted()))
+                .map(this::toDocumentResponse)
+                .toList();
     }
 }
