@@ -32,7 +32,7 @@ public class StudentProfile extends BaseEntity {
     @Column(name = "student_id", nullable = false, unique = true, length = 30)
     private String studentId;
 
-    @Column(name = "date_of_birth")
+    @Column(name = "date_of_birth", columnDefinition = "TEXT")
     private LocalDate dateOfBirth;
 
     @Column(length = 100)

@@ -26,10 +26,14 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
             Long conversationId, Long receiverId);
 
     @Modifying
-    @Query("UPDATE Message m SET m.read = true, m.readAt = CURRENT_TIMESTAMP " +
+    /*@Query("UPDATE Message m SET m.read = true, m.readAt = CURRENT_TIMESTAMP " +
            "WHERE m.conversation.id = :convId " +
            "AND m.receiver.id = :userId " +
-           "AND m.read = false")
+           "AND m.read = false")*/
+    @Query("UPDATE Message m SET m.read = true, m.readAt = LOCAL DATETIME " +
+            "WHERE m.conversation.id = :convId " +
+            "AND m.receiver.id = :userId " +
+            "AND m.read = false")
     int markConversationAsRead(
             @Param("convId") Long conversationId,
             @Param("userId") Long userId);

@@ -54,9 +54,8 @@ public class MoodEntry extends BaseEntity {
     private String note;
 
     @NotNull
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private LocalDate date;
-
     /**
      * Activités du jour — stockées en JSON.
      * Exemple : ["sport", "lecture", "amis"]

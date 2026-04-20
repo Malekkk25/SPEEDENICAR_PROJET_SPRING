@@ -36,13 +36,15 @@ private PsychologistProfile psychologist;
 private DayOfWeek dayOfWeek;
 
     @NotNull
-    @Column(name = "start_time", nullable = false)
+    /*@Column(name = "start_time", nullable = false)
+    private LocalTime startTime;*/
+    @Column(name = "start_time", nullable = false, columnDefinition = "TEXT")
     private LocalTime startTime;
-
 @NotNull
-@Column(name = "end_time" ,nullable = false)
+/*@Column(name = "end_time" ,nullable = false)
+private LocalTime endTime;*/
+@Column(name = "end_time", nullable = false, columnDefinition = "TEXT")
 private LocalTime endTime;
-
 @Column(nullable = false)
     @Builder.Default
     private Boolean available =true;

@@ -39,7 +39,9 @@ public class JwtUtils {
                 .subject(email)          // EMAIL comme subject
                 .issuedAt(new Date())
 
+
                 .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+
 
                 .signWith(getSigningKey())
                 .compact();

@@ -34,8 +34,11 @@ public class ConfidentialRecord  extends BaseEntity {
     @JoinColumn(name = "psychologist_id" ,nullable = false)
     private PsychologistProfile psychologist;
 
-    @NotNull
+    /*@NotNull
     @Column(name = "session_date" ,nullable = false)
+    private LocalDate sessionDate;*/
+    @NotNull
+    @Column(name = "session_date", nullable = false, columnDefinition = "TEXT")
     private LocalDate sessionDate;
 
     @Column(nullable = false ,columnDefinition = "TEXT")
@@ -54,7 +57,9 @@ public class ConfidentialRecord  extends BaseEntity {
     @Builder.Default
     private Boolean followUpRequired =false;
 
-    @Column(name = "next_session_date")
+    /*@Column(name = "next_session_date")
+    private LocalDate nextSessionDate;*/
+    @Column(name = "next_session_date", columnDefinition = "TEXT")
     private LocalDate nextSessionDate;
 
     @Column(name = "session_duration_minutes")
