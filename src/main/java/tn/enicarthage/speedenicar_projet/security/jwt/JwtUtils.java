@@ -38,7 +38,9 @@ public class JwtUtils {
                 .claims(claims)          // jjwt 0.12.x
                 .subject(email)          // EMAIL comme subject
                 .issuedAt(new Date())
+
                 .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+
                 .signWith(getSigningKey())
                 .compact();
     }
@@ -103,9 +105,11 @@ public class JwtUtils {
         return extractClaim(token, Claims::getExpiration).before(new Date());
     }
 
+
     // ─── Cle ─────────────────────────────────────────────────────────────────
 
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
     }
+
 }

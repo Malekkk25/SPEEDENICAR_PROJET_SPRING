@@ -36,10 +36,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             String jwt = parseJwt(request);
 
+
             if (jwt == null) {
                 log.debug("[JWT] Aucun token dans la requête: {}", request.getServletPath());
                 filterChain.doFilter(request, response);
                 return;
+
             }
 
             log.debug("[JWT] Token reçu pour: {}", request.getServletPath());

@@ -19,8 +19,7 @@ public interface MoodEntryRepository extends JpaRepository<MoodEntry, Long> {
 
     Optional<MoodEntry> findByStudentIdAndDate(Long studentId, LocalDate date);
 
-    boolean existsByStudentIdAndDate(Long studentId, LocalDate date);
-
+    boolean existsByStudentIdAndDateAndDeletedFalse(Long studentId, LocalDate date);
     @Query("SELECT m FROM MoodEntry m " +
             "WHERE m.student.id = :studentId " +
             "AND m.date BETWEEN :startDate AND :endDate " +
