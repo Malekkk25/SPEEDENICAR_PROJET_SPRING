@@ -65,4 +65,16 @@ Page<Appointment> findByStudentIdAndDeletedFalseOrderByDateTimeDesc(
             "ORDER BY a.dateTime ASC")
     List<Appointment> findPendingRequests(@Param("psyId") Long psychologistId);
 
+    List<Appointment> findByDateTimeAfterAndStatusNot(LocalDateTime now, AppointmentStatus status);
+
+    boolean existsByPsychologistIdAndDateTimeAndStatusNot(Long psyId, LocalDateTime dateTime, AppointmentStatus status);
+    List<Appointment> findByStudentId(Long studentId);
+    List<Appointment> findByStudentIdAndDateTimeBetween(Long studentId, LocalDateTime start, LocalDateTime end);
+
+    @Query("SELECT a FROM Appointment a " +
+            "JOIN FETCH a.student s " +
+            "JOIN FETCH s.user " +
+            "JOIN FETCH a.psychologist " +
+            "WHERE s.id = :studentId")
+    Page<Appointment> findByStudentIdOrderByDateTimeDesc(@Param("studentId") Long studentId, Pageable pageable);
 }

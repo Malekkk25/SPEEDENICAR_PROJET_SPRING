@@ -181,6 +181,8 @@ public class PsychologistController {
         return ResponseEntity.ok(ApiResponse.ok(null, "Fiche de suivi supprimée"));
     }
 
+
+
     // ─── Helper ──────────────────────────────────────────────────────────────
 
     /**

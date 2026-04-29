@@ -7,6 +7,7 @@ import lombok.*;
 import tn.enicarthage.speedenicar_projet.common.BaseEntity;
 import tn.enicarthage.speedenicar_projet.common.enums.AlertSeverity;
 import tn.enicarthage.speedenicar_projet.student.entity.StudentProfile;
+import tn.enicarthage.speedenicar_projet.user.entity.User;
 
 import java.time.LocalDate;
 
@@ -32,7 +33,7 @@ public class ConfidentialRecord  extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "psychologist_id" ,nullable = false)
-    private PsychologistProfile psychologist;
+    private User psychologist;
 
     /*@NotNull
     @Column(name = "session_date" ,nullable = false)

@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import tn.enicarthage.speedenicar_projet.common.BaseEntity;
+import tn.enicarthage.speedenicar_projet.user.entity.User;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
@@ -25,52 +26,29 @@ import java.time.LocalTime;
 @Builder
 public class TimeSlot extends BaseEntity {
 
-@ManyToOne(fetch = FetchType.LAZY)
-@JoinColumn (name = "psychologist_id" , nullable = false)
-private PsychologistProfile psychologist;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
+    // On pointe vers User au lieu de PsychologistProfile
+    @ManyToOne
+    @JoinColumn(name = "psychologist_id")
+    private User psychologist;
 
-@NotNull
-@Enumerated (EnumType.STRING)
-@Column(name = "day_of_week" , nullable = false ,length = 10)
-private DayOfWeek dayOfWeek;
-
-    @NotNull
-    /*@Column(name = "start_time", nullable = false)
-    private LocalTime startTime;*/
-    @Column(name = "start_time", nullable = false, columnDefinition = "TEXT")
-    private LocalTime startTime;
-@NotNull
-/*@Column(name = "end_time" ,nullable = false)
-private LocalTime endTime;*/
-@Column(name = "end_time", nullable = false, columnDefinition = "TEXT")
-private LocalTime endTime;
-@Column(nullable = false)
-    @Builder.Default
-    private Boolean available =true;
-
-public int getDurationMinutes(){
-    if(startTime == null || endTime ==null) return 0;
-    return (int)java.time.Duration.between(startTime,endTime).toMinutes();
-}
-
-public boolean overlapsWith(LocalTime otherStart ,LocalTime otherEnd){
-    return startTime.isBefore(otherEnd) && otherStart.isBefore(endTime);
-}
-
-
-@PrePersist
-    @PreUpdate
-    private void validateTimes(){
-    if(startTime != null && endTime!= null && !endTime.isAfter(startTime)){
-throw  new IllegalArgumentException(" L_heure de din doit etre postérieure à l'heure de début ");
-    }
-}
-
-
-
-
-
-
+    @Enumerated(EnumType.STRING) // ABSOLUMENT NECESSAIRE pour lire "WEDNESDAY"
+    private DayOfWeek dayOfWeek;
+    private String startTime;
+    private String endTime;
+    private boolean available = true;
+    @Column(name = "is_deleted") // Force Hibernate à regarder la bonne colonne
+    private boolean deleted;
 
 }
+
+
+
+
+
+
+
+

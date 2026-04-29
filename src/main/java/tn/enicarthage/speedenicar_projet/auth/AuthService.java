@@ -1,9 +1,7 @@
 package tn.enicarthage.speedenicar_projet.auth;
 
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.enicarthage.speedenicar_projet.auth.dto.AuthResponse;
@@ -12,8 +10,6 @@ import tn.enicarthage.speedenicar_projet.auth.dto.RefreshTokenRequest;
 import tn.enicarthage.speedenicar_projet.auth.dto.RegisterRequest;
 import tn.enicarthage.speedenicar_projet.common.enums.Role;
 import tn.enicarthage.speedenicar_projet.common.exception.BusinessException;
-import tn.enicarthage.speedenicar_projet.module_psychologue.entity.PsychologistProfile;
-import tn.enicarthage.speedenicar_projet.module_psychologue.repository.PsychologistProfileRepository;
 import tn.enicarthage.speedenicar_projet.student.entity.StudentProfile;
 import tn.enicarthage.speedenicar_projet.student.repository.StudentProfileRepository;
 import tn.enicarthage.speedenicar_projet.user.entity.User;
@@ -24,19 +20,18 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AuthService {
     private final UserRepository userRepo;
     private final StudentProfileRepository studentProfileRepo;
-    private final PsychologistProfileRepository psychologistProfileRepo;
+
+    // SUPPRIMÉ : private final PsychologistProfileRepository psychologistProfileRepo;
+
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
-
-
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
@@ -70,6 +65,7 @@ public class AuthService {
             throw new BusinessException("Un compte avec cet email existe déjà");
         }
 
+        // 1. On prépare l'utilisateur de base
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
@@ -80,9 +76,21 @@ public class AuthService {
                 .enabled(true)
                 .build();
 
+        // 2. INTÉGRATION DIRECTE POUR LE PSYCHOLOGUE
+        if (request.getRole() == Role.PSYCHOLOGIST) {
+            if (request.getLicenseNumber() == null || request.getLicenseNumber().isBlank()) {
+                throw new BusinessException("Le numéro de licence est obligatoire");
+            }
+            // On ajoute les infos directement dans l'entité User (Assure-toi d'avoir les @Setter ou de le mettre dans le Builder)
+            user.setLicenseNumber(request.getLicenseNumber());
+            user.setSpecialty(request.getSpecialization());
+            // user.setBio(request.getBio()); // Si tu as un champ bio dans la requête, ajoute-le ici
+        }
+
+        // 3. On sauvegarde le User (qui contient maintenant les infos Psy si c'en est un)
         User savedUser = userRepo.save(user);
 
-        // Create role-specific profile
+        // 4. Si c'est un étudiant, on gère son profil séparé (on garde cette logique comme avant)
         if (request.getRole() == Role.STUDENT) {
             if (request.getStudentId() == null || request.getStudentId().isBlank()) {
                 throw new BusinessException("Le numéro étudiant est obligatoire");
@@ -94,16 +102,6 @@ public class AuthService {
                     .level(request.getLevel())
                     .build();
             studentProfileRepo.save(profile);
-        } else if (request.getRole() == Role.PSYCHOLOGIST) {
-            if (request.getLicenseNumber() == null || request.getLicenseNumber().isBlank()) {
-                throw new BusinessException("Le numéro de licence est obligatoire");
-            }
-            PsychologistProfile profile = PsychologistProfile.builder()
-                    .user(savedUser)
-                    .licenseNumber(request.getLicenseNumber())
-                    .specialization(request.getSpecialization())
-                    .build();
-            psychologistProfileRepo.save(profile);
         }
 
         String accessToken = jwtUtils.generateAccessToken(
@@ -136,4 +134,3 @@ public class AuthService {
                 user.getRole());
     }
 }
-

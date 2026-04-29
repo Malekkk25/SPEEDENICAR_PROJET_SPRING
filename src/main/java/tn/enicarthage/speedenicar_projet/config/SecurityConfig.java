@@ -77,7 +77,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/psychologist/**").hasRole("PSYCHOLOGIST")
                         .requestMatchers("/api/scolarity/**").hasRole("SCOLARITY")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
+                        .requestMatchers("/api/student/").hasRole("STUDENT")
                         // ── Authentifié (tous rôles) ──────────────────────
                         .requestMatchers("/api/profile/**").authenticated()
                         .requestMatchers("/api/notifications/**").authenticated()

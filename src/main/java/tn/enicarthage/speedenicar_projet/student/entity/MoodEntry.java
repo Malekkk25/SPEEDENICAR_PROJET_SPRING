@@ -7,7 +7,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import tn.enicarthage.speedenicar_projet.common.BaseEntity;
 import tn.enicarthage.speedenicar_projet.common.enums.MoodLevel;
-
+import org.hibernate.annotations.JdbcTypeCode; // <-- AJOUTER CET IMPORT
+import org.hibernate.type.SqlTypes;
 import java.time.LocalDate;
 
 /**
@@ -60,7 +61,8 @@ public class MoodEntry extends BaseEntity {
      * Activités du jour — stockées en JSON.
      * Exemple : ["sport", "lecture", "amis"]
      */
-    @Column(columnDefinition = "JSON")
+    @JdbcTypeCode(SqlTypes.JSON) // <--- C'EST CETTE LIGNE QUI CORRIGE L'ERREUR
+    @Column(columnDefinition = "json")
     private String activities;
 }
 

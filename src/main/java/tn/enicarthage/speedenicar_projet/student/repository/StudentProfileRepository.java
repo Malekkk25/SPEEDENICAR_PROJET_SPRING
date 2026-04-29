@@ -11,9 +11,9 @@ import java.util.Optional;
 @Repository
 public interface StudentProfileRepository extends JpaRepository<StudentProfile, Long> {
 
-    Optional<StudentProfile> findByUserId(Long userId);
 
-    Optional<StudentProfile> findByStudentId(String studentId);
+
+    Optional<StudentProfile> findByUserId(Long userId);
 
     boolean existsByStudentId(String studentId);
 
@@ -26,5 +26,7 @@ public interface StudentProfileRepository extends JpaRepository<StudentProfile, 
             "JOIN FETCH sp.user u " +
             "WHERE sp.studentId = :studentId AND sp.deleted = false")
     Optional<StudentProfile> findByStudentIdWithUser(@Param("studentId") String studentId);
+
+
 }
 

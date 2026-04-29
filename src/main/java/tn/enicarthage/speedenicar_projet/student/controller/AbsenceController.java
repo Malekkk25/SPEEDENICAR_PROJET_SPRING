@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/student/absences")
+@RequestMapping("/api/student/absences")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('STUDENT')")
 public class AbsenceController {

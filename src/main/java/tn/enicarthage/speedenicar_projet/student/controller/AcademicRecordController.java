@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/student")
+@RequestMapping("/api/student")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('STUDENT')")
 public class AcademicRecordController {

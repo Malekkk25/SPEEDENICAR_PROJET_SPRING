@@ -22,4 +22,9 @@ public interface AcademicRecordRepository
             "AND a.deleted = false " +
             "ORDER BY a.semester ASC")
     List<AcademicRecord> findActiveByStudentId(@Param("studentId") Long studentId);
+
+    List<AcademicRecord> findByStudentIdAndDeletedFalseOrderBySemesterAsc(Long studentId);
+
+    List<AcademicRecord> findByStudentIdAndSemesterAndDeletedFalse(
+            Long studentId, String semester);
 }

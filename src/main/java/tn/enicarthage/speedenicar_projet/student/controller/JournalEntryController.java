@@ -18,7 +18,7 @@ import tn.enicarthage.speedenicar_projet.student.entity.JournalEntry;
 import tn.enicarthage.speedenicar_projet.student.service.JournalEntryService;
 
 @RestController
-@RequestMapping("/api/v1/student/journal")
+@RequestMapping("/api/student/journal")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('STUDENT')")
 public class JournalEntryController {

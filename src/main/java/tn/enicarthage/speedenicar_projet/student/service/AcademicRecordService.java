@@ -3,9 +3,9 @@ package tn.enicarthage.speedenicar_projet.student.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tn.enicarthage.speedenicar_projet.scolarity.repository.AcademicRecordRepository;
 import tn.enicarthage.speedenicar_projet.student.entity.AcademicRecord;
 import tn.enicarthage.speedenicar_projet.student.entity.StudentProfile;
-import tn.enicarthage.speedenicar_projet.student.repository.AcademicRecordRepository;
 import tn.enicarthage.speedenicar_projet.student.repository.StudentProfileRepository;
 
 import java.util.List;
