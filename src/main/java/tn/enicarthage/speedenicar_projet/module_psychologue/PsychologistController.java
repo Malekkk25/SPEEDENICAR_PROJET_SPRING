@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import tn.enicarthage.speedenicar_projet.common.dto.ApiResponse;
 import tn.enicarthage.speedenicar_projet.module_psychologue.dto.*;
+import tn.enicarthage.speedenicar_projet.scolarity.dto.response.MedicalDocumentResponse;
 import tn.enicarthage.speedenicar_projet.user.repository.UserRepository;
 
 import java.time.DayOfWeek;
@@ -181,7 +182,30 @@ public class PsychologistController {
         return ResponseEntity.ok(ApiResponse.ok(null, "Fiche de suivi supprimée"));
     }
 
+// ─── Documents Médicaux (Gestion par le Psychologue) ──────────────
 
+    @GetMapping("/documents/student/{studentId}")
+    public ResponseEntity<ApiResponse<List<MedicalDocumentResponse>>> getStudentMedicalDocuments(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long studentId) {
+        Long userId = extractUserId(userDetails);
+
+        return ResponseEntity.ok(ApiResponse.ok(
+                psychologistService.getStudentMedicalDocuments(userId, studentId)));
+    }
+
+    @PutMapping("/documents/{documentId}/status")
+    public ResponseEntity<ApiResponse<MedicalDocumentResponse>> updateDocumentStatus(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long documentId,
+            @RequestParam String status,  // "VALIDATED" ou "REJECTED"
+            @RequestParam(required = false) String reason) {
+        Long userId = extractUserId(userDetails);
+
+        return ResponseEntity.ok(ApiResponse.ok(
+                psychologistService.updateDocumentStatus(userId, documentId, status, reason),
+                "Statut du document mis à jour"));
+    }
 
     // ─── Helper ──────────────────────────────────────────────────────────────
 

@@ -9,16 +9,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.enicarthage.speedenicar_projet.common.enums.AlertSeverity;
 import tn.enicarthage.speedenicar_projet.common.enums.AppointmentStatus;
+import tn.enicarthage.speedenicar_projet.common.enums.DocStatus;
 import tn.enicarthage.speedenicar_projet.common.exception.BusinessException;
 import tn.enicarthage.speedenicar_projet.common.exception.ResourceNotFoundException;
 import tn.enicarthage.speedenicar_projet.module_psychologue.appointment.Appointment;
 import tn.enicarthage.speedenicar_projet.module_psychologue.appointment.AppointmentRepository;
-
 import tn.enicarthage.speedenicar_projet.module_psychologue.appointment.TimeSlotRepository;
+import tn.enicarthage.speedenicar_projet.module_psychologue.document.MedicalDocument;
+import tn.enicarthage.speedenicar_projet.module_psychologue.document.MedicalDocumentRepository; // 👈 IMPORT AJOUTÉ
 import tn.enicarthage.speedenicar_projet.module_psychologue.dto.*;
 import tn.enicarthage.speedenicar_projet.module_psychologue.entity.ConfidentialRecord;
 import tn.enicarthage.speedenicar_projet.module_psychologue.entity.TimeSlot;
 import tn.enicarthage.speedenicar_projet.module_psychologue.repository.ConfidentialRecordRepository;
+import tn.enicarthage.speedenicar_projet.scolarity.dto.response.MedicalDocumentResponse;
 import tn.enicarthage.speedenicar_projet.student.entity.StudentProfile;
 import tn.enicarthage.speedenicar_projet.student.repository.AbsenceRepository;
 import tn.enicarthage.speedenicar_projet.student.repository.MoodEntryRepository;
@@ -40,7 +43,6 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class PsychologistService {
 
-    // On remplace PsychologistProfileRepository par UserRepository
     private final UserRepository userRepo;
     private final TimeSlotRepository timeSlotRepo;
     private final ConfidentialRecordRepository recordRepo;
@@ -48,9 +50,10 @@ public class PsychologistService {
     private final StudentProfileRepository studentProfileRepo;
     private final MoodEntryRepository moodEntryRepo;
     private final AbsenceRepository absenceRepo;
+    private final MedicalDocumentRepository medicalDocumentRepository; // 👈 DÉCLARATION AJOUTÉE
 
     // ═══════════════════════════════════════════════════════
-    //  PROFILE (Anciennement PsychologistProfile)
+    //  PROFILE
     // ═══════════════════════════════════════════════════════
 
     public User getPsychologistById(Long userId) {
@@ -92,7 +95,7 @@ public class PsychologistService {
                 psyId, monthStart, LocalDate.now());
 
         return PsychologistDashboardResponse.builder()
-                .psychologistName(psy.getFullName()) // Assure-toi d'avoir cette méthode dans User.java
+                .psychologistName(psy.getFullName())
                 .specialization(psy.getSpecialty())
                 .todayAppointments(todayAppts)
                 .pendingRequests(pendingReqs)
@@ -120,7 +123,6 @@ public class PsychologistService {
     public List<TimeSlotResponse> updateSchedule(Long userId, ScheduleUpdateRequest request) {
         User psy = getPsychologistById(userId);
 
-        // 1. Validation des chevauchements
         for (int i = 0; i < request.getSlots().size(); i++) {
             TimeSlotRequest slot = request.getSlots().get(i);
             for (int j = i + 1; j < request.getSlots().size(); j++) {
@@ -135,17 +137,15 @@ public class PsychologistService {
             }
         }
 
-        // 2. SUPPRESSION PHYSIQUE
         timeSlotRepo.deleteByPsychologistId(psy.getId());
         timeSlotRepo.flush();
 
-        // 3. CRÉATION AVEC CONVERSION (String)
         List<TimeSlot> newSlots = request.getSlots().stream()
                 .map(req -> {
                     TimeSlot ts = new TimeSlot();
-                    ts.setPsychologist(psy); // On passe l'objet User
+                    ts.setPsychologist(psy);
 
-                    // Conversion des Enum/Time en String pour la base de données
+                    // Note : assure-toi que ts.setDayOfWeek() accepte bien ce que tu lui envoies (String ou Enum)
                     ts.setDayOfWeek(req.getDayOfWeek() != null ? DayOfWeek.valueOf(req.getDayOfWeek().name()) : null);
                     ts.setStartTime(req.getStartTime() != null ? req.getStartTime().toString() : null);
                     ts.setEndTime(req.getEndTime() != null ? req.getEndTime().toString() : null);
@@ -157,20 +157,17 @@ public class PsychologistService {
                 })
                 .collect(Collectors.toList());
 
-        // 4. SAUVEGARDE
         List<TimeSlot> saved = timeSlotRepo.saveAll(newSlots);
 
-        // 5. RETOUR
         return saved.stream().map(this::toTimeSlotResponse).collect(Collectors.toList());
     }
 
     public List<TimeSlotResponse> getAvailableSlots(Long psychologistUserId, DayOfWeek dayOfWeek) {
         User psy = getPsychologistById(psychologistUserId);
 
-        // On enlève .name() car le repository attend l'Enum DayOfWeek
         return timeSlotRepo.findByPsychologistIdAndDayOfWeekAndAvailableTrueAndDeletedFalse(
                         psy.getId(),
-                        dayOfWeek
+                        dayOfWeek // ou dayOfWeek.name() si ton repo attend un String
                 )
                 .stream()
                 .map(this::toTimeSlotResponse)
@@ -178,12 +175,42 @@ public class PsychologistService {
     }
 
     // ═══════════════════════════════════════════════════════
-    //  APPOINTMENTS
+    //  APPOINTMENTS & DOCUMENTS
     // ═══════════════════════════════════════════════════════
 
     public Page<AppointmentResponse> getAppointments(Long userId, Pageable pageable) {
         return appointmentRepo.findByPsychologistIdAndDeletedFalseOrderByDateTimeDesc(userId, pageable)
                 .map(this::toAppointmentResponse);
+    }
+
+    public List<MedicalDocumentResponse> getStudentMedicalDocuments(Long psyUserId, Long studentId) {
+        List<MedicalDocument> documents = medicalDocumentRepository
+                .findByStudentIdOrderByCreatedAtDesc(studentId);
+
+        return documents.stream()
+                .map(this::mapToMedicalDocumentResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public MedicalDocumentResponse updateDocumentStatus(Long psyUserId, Long documentId, String status, String reason) {
+        MedicalDocument document = medicalDocumentRepository.findById(documentId)
+                .orElseThrow(() -> new RuntimeException("Document introuvable avec l'ID: " + documentId));
+
+        // 👈 1. On convertit le String en Enum DocStatus
+        DocStatus newStatus = DocStatus.valueOf(status.toUpperCase());
+
+        // 👈 2. On passe l'Enum à l'entité
+        document.setStatus(newStatus);
+
+        // On vérifie avec l'Enum
+        if (newStatus == DocStatus.REJECTED && reason != null) {
+            document.setRejectionReason(reason);
+        }
+
+        medicalDocumentRepository.save(document);
+
+        return mapToMedicalDocumentResponse(document);
     }
 
     public List<AppointmentResponse> getPendingRequests(Long userId) {
@@ -329,7 +356,7 @@ public class PsychologistService {
             if (!reasons.isEmpty()) {
                 alerts.add(StudentAlertResponse.builder()
                         .studentId(studentId)
-                        .studentName(student.getUser().getFullName()) // Correction ici aussi
+                        .studentName(student.getUser().getFullName())
                         .currentRiskLevel(currentRisk)
                         .recentMoodAverage(moodAvg)
                         .alertReasons(reasons)
@@ -358,18 +385,24 @@ public class PsychologistService {
     }
 
     private TimeSlotResponse toTimeSlotResponse(TimeSlot ts) {
-        // Comme ts.getDayOfWeek() retourne maintenant un String, on le reconvertit en DayOfWeek pour la réponse.
         DayOfWeek day = ts.getDayOfWeek() != null ? DayOfWeek.valueOf(String.valueOf(ts.getDayOfWeek())) : null;
         LocalTime start = ts.getStartTime() != null ? LocalTime.parse(ts.getStartTime()) : null;
         LocalTime end = ts.getEndTime() != null ? LocalTime.parse(ts.getEndTime()) : null;
+
+        // 👈 SÉCURITÉ AJOUTÉE : gestion propre du boolean pour éviter un NullPointerException
+        boolean isAvailable = true;
+        if (ts.isAvailable() != true) {
+            isAvailable = ts.isAvailable();
+        } else if (ts.isAvailable() != true) {
+            isAvailable = ts.isAvailable();
+        }
 
         return TimeSlotResponse.builder()
                 .id(ts.getId())
                 .dayOfWeek(day)
                 .startTime(start)
                 .endTime(end)
-                .available(ts.isAvailable() == true ? ts.isAvailable() : true) // Évite les NullPointerException si boolean objet
-                // .durationMinutes(...) -> Supprimé car n'existait pas par défaut, ajoute-le si tu as le champ
+                .available(isAvailable)
                 .build();
     }
 
@@ -380,7 +413,8 @@ public class PsychologistService {
                 .studentName(a.getStudent().getUser().getFullName())
                 .studentDepartment(a.getStudent().getDepartment())
                 .psychologistId(a.getPsychologist().getId())
-                .psychologistName(a.getStudent().getUser().getFullName()) // On récupère depuis le User
+                // 👈 CORRECTION DU BUG ICI : On récupère bien le nom du Psy et non de l'étudiant
+                .psychologistName(a.getPsychologist().getFullName())
                 .dateTime(a.getDateTime())
                 .status(a.getStatus())
                 .type(a.getType())
@@ -395,6 +429,17 @@ public class PsychologistService {
                 .sessionDate(r.getSessionDate())
                 .riskLevel(r.getRiskLevel())
                 .followUpRequired(r.getFollowUpRequired())
+                .build();
+    }
+
+    // 👈 MÉTHODE AJOUTÉE : Pour mapper les documents médicaux
+    private MedicalDocumentResponse mapToMedicalDocumentResponse(MedicalDocument doc) {
+        return MedicalDocumentResponse.builder()
+                .id(doc.getId())
+                .fileName(doc.getFileName()) // Adapte "getTitle()" si le nom est "getFileName()" dans ton entité
+                .status(doc.getStatus())
+                .rejectionReason(doc.getRejectionReason())
+                //.createdAt(doc.getCreatedAt()) // Ajoute le mapping de la date si nécessaire
                 .build();
     }
 }

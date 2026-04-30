@@ -29,9 +29,11 @@ public class AcademicRecordController {
             @AuthenticationPrincipal UserDetails user,
             @RequestParam(required = false) String semester) {
 
-        Long userId = Long.parseLong(user.getUsername());
+        // On garde directement le String renvoyé par getUsername()
+        String userEmail = user.getUsername();
+
         List<AcademicRecordResponse> grades = academicRecordService
-                .getGrades(userId, semester)
+                .getGrades(userEmail, semester) // Plus d'erreur, les deux sont des String !
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -45,11 +47,15 @@ public class AcademicRecordController {
             @AuthenticationPrincipal UserDetails user,
             @RequestParam(required = false) String semester) {
 
-        Long userId = Long.parseLong(user.getUsername());
-        double average = academicRecordService.getAverage(userId, semester);
+        // 1. On récupère directement l'email (String) sans essayer de le transformer en Long
+        String userEmail = user.getUsername();
+
+        // 2. On passe l'email (String) à ton service, ce qui résout l'erreur de typage
+        double average = academicRecordService.getAverage(userEmail, semester);
 
         return ResponseEntity.ok(
-                ApiResponse.ok(Map.of("average", average)));
+                ApiResponse.ok(Map.of("average", average))
+        );
     }
 
     // ── Mapper entité → response ─────────────────────────────

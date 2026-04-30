@@ -21,8 +21,8 @@ public class AcademicRecordService {
     // ── Récupérer les notes (avec filtre semestre optionnel) ─
 
     @Transactional(readOnly = true)
-    public List<AcademicRecord> getGrades(Long userId, String semester) {
-        StudentProfile student = getStudentByUserId(userId);
+    public List<AcademicRecord> getGrades(String email, String semester) { // Changé en String email
+        StudentProfile student = getStudentByEmail(email);
 
         if (semester != null && !semester.isBlank()) {
             return academicRecordRepository
@@ -36,15 +36,15 @@ public class AcademicRecordService {
     // ── Calculer la moyenne générale ─────────────────────────
 
     @Transactional(readOnly = true)
-    public double getAverage(Long userId, String semester) {
-        StudentProfile student = getStudentByUserId(userId);
+    public double getAverage(String email, String semester) { // Changé en String email
+        StudentProfile student = getStudentByEmail(email);
         return student.getAverageGrade(semester);
     }
 
     // ── Helper privé ─────────────────────────────────────────
 
-    private StudentProfile getStudentByUserId(Long userId) {
-        return studentProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Profil étudiant introuvable"));
+    private StudentProfile getStudentByEmail(String email) {
+        return studentProfileRepository.findByUserEmail(email) // <-- Modification ici
+                .orElseThrow(() -> new RuntimeException("Profil étudiant introuvable pour l'email: " + email));
     }
 }

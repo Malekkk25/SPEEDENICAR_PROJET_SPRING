@@ -10,8 +10,8 @@ import java.util.Optional;
 
 @Repository
 public interface StudentProfileRepository extends JpaRepository<StudentProfile, Long> {
-
-
+    // Spring va comprendre : "Cherche un StudentProfile dont le User associé a cet email"
+    Optional<StudentProfile> findByUserEmail(String email);
 
     Optional<StudentProfile> findByUserId(Long userId);
 

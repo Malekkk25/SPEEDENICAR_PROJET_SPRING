@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import tn.enicarthage.speedenicar_projet.common.enums.DocStatus;
 
+import java.util.List;
+
 @Repository
 public interface MedicalDocumentRepository extends JpaRepository<MedicalDocument, Long> {
 
@@ -14,7 +16,7 @@ public interface MedicalDocumentRepository extends JpaRepository<MedicalDocument
 
     Page<MedicalDocument> findByStatusAndDeletedFalseOrderByCreatedAtAsc(
             DocStatus status, Pageable pageable);
-
+    List<MedicalDocument> findByStudentIdOrderByCreatedAtDesc(Long studentId);
     long countByStatusAndDeletedFalse(DocStatus status);
 
     long countByStudentIdAndStatusAndDeletedFalse(Long studentId, DocStatus status);
