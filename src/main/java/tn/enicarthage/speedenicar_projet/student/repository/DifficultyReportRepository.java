@@ -24,4 +24,5 @@ public interface DifficultyReportRepository extends JpaRepository<DifficultyRepo
 
     Long countByStudentIdAndStatusAndDeletedFalse(
             Long studentId, ReportStatus status);
+    List<DifficultyReport> findByStudentIdOrderByCreatedAtDesc(Long studentId);
 }

@@ -2,19 +2,29 @@ package tn.enicarthage.speedenicar_projet.module_psychologue;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
 import tn.enicarthage.speedenicar_projet.common.dto.ApiResponse;
+import tn.enicarthage.speedenicar_projet.module_psychologue.document.MedicalDocumentRepository;
 import tn.enicarthage.speedenicar_projet.module_psychologue.dto.*;
+import tn.enicarthage.speedenicar_projet.scolarity.dto.request.RejectDocumentRequest;
 import tn.enicarthage.speedenicar_projet.scolarity.dto.response.MedicalDocumentResponse;
 import tn.enicarthage.speedenicar_projet.user.repository.UserRepository;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.DayOfWeek;
 import java.util.List;
 
@@ -24,29 +34,29 @@ import java.util.List;
 public class PsychologistController {
 
     private final PsychologistService psychologistService;
-    private final UserRepository      userRepository;   // ← ajout
+    private final UserRepository userRepository;
+    private final MedicalDocumentRepository medicalDocumentRepository;
+
+    // ─── Dashboard & Planning ─────────────────────────────────────────────
 
     @GetMapping("/dashboard")
     public ResponseEntity<ApiResponse<PsychologistDashboardResponse>> getDashboard(
             @AuthenticationPrincipal UserDetails userDetails) {
-        Long userId = extractUserId(userDetails);
-        return ResponseEntity.ok(ApiResponse.ok(psychologistService.getDashboard(userId)));
+        return ResponseEntity.ok(ApiResponse.ok(psychologistService.getDashboard(getUserId(userDetails))));
     }
 
     @GetMapping("/schedule")
     public ResponseEntity<ApiResponse<List<TimeSlotResponse>>> getSchedule(
             @AuthenticationPrincipal UserDetails userDetails) {
-        Long userId = extractUserId(userDetails);
-        return ResponseEntity.ok(ApiResponse.ok(psychologistService.getSchedule(userId)));
+        return ResponseEntity.ok(ApiResponse.ok(psychologistService.getSchedule(getUserId(userDetails))));
     }
 
     @PutMapping("/schedule")
     public ResponseEntity<ApiResponse<List<TimeSlotResponse>>> updateSchedule(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody ScheduleUpdateRequest request) {
-        Long userId = extractUserId(userDetails);
         return ResponseEntity.ok(ApiResponse.ok(
-                psychologistService.updateSchedule(userId, request),
+                psychologistService.updateSchedule(getUserId(userDetails), request),
                 "Planning mis à jour avec succès"));
     }
 
@@ -58,38 +68,36 @@ public class PsychologistController {
                 psychologistService.getAvailableSlots(psychologistId, day)));
     }
 
+    // ─── Rendez-vous ──────────────────────────────────────────────────────
+
     @GetMapping("/appointments")
     public ResponseEntity<ApiResponse<Page<AppointmentResponse>>> getAppointments(
             @AuthenticationPrincipal UserDetails userDetails,
             @PageableDefault(size = 20) Pageable pageable) {
-        Long userId = extractUserId(userDetails);
         return ResponseEntity.ok(ApiResponse.ok(
-                psychologistService.getAppointments(userId, pageable)));
+                psychologistService.getAppointments(getUserId(userDetails), pageable)));
     }
 
     @GetMapping("/appointments/today")
     public ResponseEntity<ApiResponse<List<AppointmentResponse>>> getTodayAppointments(
             @AuthenticationPrincipal UserDetails userDetails) {
-        Long userId = extractUserId(userDetails);
         return ResponseEntity.ok(ApiResponse.ok(
-                psychologistService.getTodayAppointments(userId)));
+                psychologistService.getTodayAppointments(getUserId(userDetails))));
     }
 
     @GetMapping("/appointments/pending")
     public ResponseEntity<ApiResponse<List<AppointmentResponse>>> getPendingRequests(
             @AuthenticationPrincipal UserDetails userDetails) {
-        Long userId = extractUserId(userDetails);
         return ResponseEntity.ok(ApiResponse.ok(
-                psychologistService.getPendingRequests(userId)));
+                psychologistService.getPendingRequests(getUserId(userDetails))));
     }
 
     @PutMapping("/appointments/{id}/confirm")
     public ResponseEntity<ApiResponse<AppointmentResponse>> confirmAppointment(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id) {
-        Long userId = extractUserId(userDetails);
         return ResponseEntity.ok(ApiResponse.ok(
-                psychologistService.confirmAppointment(userId, id),
+                psychologistService.confirmAppointment(getUserId(userDetails), id),
                 "Rendez-vous confirmé"));
     }
 
@@ -98,9 +106,8 @@ public class PsychologistController {
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id,
             @RequestParam(required = false) String reason) {
-        Long userId = extractUserId(userDetails);
         return ResponseEntity.ok(ApiResponse.ok(
-                psychologistService.cancelAppointment(userId, id, reason),
+                psychologistService.cancelAppointment(getUserId(userDetails), id, reason),
                 "Rendez-vous annulé"));
     }
 
@@ -109,19 +116,19 @@ public class PsychologistController {
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id,
             @RequestParam(required = false) String notes) {
-        Long userId = extractUserId(userDetails);
         return ResponseEntity.ok(ApiResponse.ok(
-                psychologistService.completeAppointment(userId, id, notes),
+                psychologistService.completeAppointment(getUserId(userDetails), id, notes),
                 "Rendez-vous terminé"));
     }
+
+    // ─── Dossiers & Suivis ────────────────────────────────────────────────
 
     @GetMapping("/records")
     public ResponseEntity<ApiResponse<Page<RecordResponse>>> getAllRecords(
             @AuthenticationPrincipal UserDetails userDetails,
             @PageableDefault(size = 15) Pageable pageable) {
-        Long userId = extractUserId(userDetails);
         return ResponseEntity.ok(ApiResponse.ok(
-                psychologistService.getAllMyRecords(userId, pageable)));
+                psychologistService.getAllMyRecords(getUserId(userDetails), pageable)));
     }
 
     @GetMapping("/records/student/{studentId}")
@@ -129,20 +136,18 @@ public class PsychologistController {
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long studentId,
             @PageableDefault(size = 10) Pageable pageable) {
-        Long userId = extractUserId(userDetails);
         return ResponseEntity.ok(ApiResponse.ok(
-                psychologistService.getStudentRecords(userId, studentId, pageable)));
+                psychologistService.getStudentRecords(getUserId(userDetails), studentId, pageable)));
     }
 
     @PostMapping("/records")
     public ResponseEntity<ApiResponse<RecordResponse>> createRecord(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody CreateRecordRequest request) {
-        Long userId = extractUserId(userDetails);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.created(
-                        psychologistService.createRecord(userId, request),
+                        psychologistService.createRecord(getUserId(userDetails), request),
                         "Fiche de suivi créée"));
     }
 
@@ -151,73 +156,99 @@ public class PsychologistController {
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id,
             @Valid @RequestBody UpdateRecordRequest request) {
-        Long userId = extractUserId(userDetails);
         return ResponseEntity.ok(ApiResponse.ok(
-                psychologistService.updateRecord(userId, id, request),
+                psychologistService.updateRecord(getUserId(userDetails), id, request),
                 "Fiche de suivi mise à jour"));
-    }
-
-    @GetMapping("/records/follow-ups")
-    public ResponseEntity<ApiResponse<List<RecordResponse>>> getPendingFollowUps(
-            @AuthenticationPrincipal UserDetails userDetails) {
-        Long userId = extractUserId(userDetails);
-        return ResponseEntity.ok(ApiResponse.ok(
-                psychologistService.getPendingFollowUps(userId)));
     }
 
     @GetMapping("/alerts")
     public ResponseEntity<ApiResponse<List<StudentAlertResponse>>> getStudentsAtRisk(
             @AuthenticationPrincipal UserDetails userDetails) {
-        Long userId = extractUserId(userDetails);
         return ResponseEntity.ok(ApiResponse.ok(
-                psychologistService.getStudentsAtRisk(userId)));
+                psychologistService.getStudentsAtRisk(getUserId(userDetails))));
     }
 
     @DeleteMapping("/records/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteRecord(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id) {
-        Long userId = extractUserId(userDetails);
-        psychologistService.deleteRecord(userId, id);
+        psychologistService.deleteRecord(getUserId(userDetails), id);
         return ResponseEntity.ok(ApiResponse.ok(null, "Fiche de suivi supprimée"));
     }
 
-// ─── Documents Médicaux (Gestion par le Psychologue) ──────────────
+    // ─── Documents Médicaux ──────────────────────────────────────────────
+
+    @GetMapping("/documents/pending")
+    public ResponseEntity<ApiResponse<List<MedicalDocumentResponse>>> getPending() {
+        return ResponseEntity.ok(ApiResponse.ok(psychologistService.getPendingDocuments()));
+    }
 
     @GetMapping("/documents/student/{studentId}")
     public ResponseEntity<ApiResponse<List<MedicalDocumentResponse>>> getStudentMedicalDocuments(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable Long studentId) {
-        Long userId = extractUserId(userDetails);
-
+            @PathVariable Long studentId,
+            @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(ApiResponse.ok(
-                psychologistService.getStudentMedicalDocuments(userId, studentId)));
+                psychologistService.getStudentMedicalDocuments(getUserId(userDetails), studentId)));
     }
 
-    @PutMapping("/documents/{documentId}/status")
-    public ResponseEntity<ApiResponse<MedicalDocumentResponse>> updateDocumentStatus(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable Long documentId,
-            @RequestParam String status,  // "VALIDATED" ou "REJECTED"
-            @RequestParam(required = false) String reason) {
-        Long userId = extractUserId(userDetails);
-
+    @PutMapping("/documents/{id}/validate")
+    public ResponseEntity<ApiResponse<MedicalDocumentResponse>> validate(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(ApiResponse.ok(
-                psychologistService.updateDocumentStatus(userId, documentId, status, reason),
-                "Statut du document mis à jour"));
+                psychologistService.validateDocument(id, getUserId(userDetails)),
+                "Document validé avec succès"));
     }
 
-    // ─── Helper ──────────────────────────────────────────────────────────────
+    @PutMapping("/documents/{id}/reject")
+    public ResponseEntity<ApiResponse<MedicalDocumentResponse>> reject(
+            @PathVariable Long id,
+            @Valid @RequestBody RejectDocumentRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                psychologistService.rejectDocument(id, request.getReason(), getUserId(userDetails)),
+                "Document refusé"));
+    }
 
-    /**
-     * ✅ CORRIGÉ : username = email → chercher l'ID en base
-     * Avant : Long.parseLong(email) → NumberFormatException
-     */
-    private Long extractUserId(UserDetails userDetails) {
-        String email = userDetails.getUsername(); // = email grâce au fix JWT
+    // ─── Téléchargement Document ──────────────────────────────────────────
+
+    @GetMapping("/documents/{id}/download")
+    public ResponseEntity<Resource> downloadMedicalDocument(@PathVariable Long id) {
+        return medicalDocumentRepository.findById(id)
+                .map(doc -> {
+                    String pathString = doc.getFilePath();
+                    System.out.println("DEBUG - Tentative d'accès au fichier : " + pathString); // Log du chemin
+
+                    Path path = Paths.get(pathString);
+                    Resource resource = new FileSystemResource(path);
+
+                    if (!resource.exists()) {
+                        System.out.println("DEBUG - Fichier non trouvé sur le disque : " + pathString);
+                        return new ResponseEntity<Resource>(HttpStatus.NOT_FOUND);
+                    }
+
+                    return ResponseEntity.ok()
+                            .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + doc.getFileName() + "\"")
+                            .contentType(MediaType.parseMediaType(doc.getMimeType()))
+                            .body(resource);
+                })
+                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    // ─── Helper Unifié ────────────────────────────────────────────────────────
+
+    private Long getUserId(Object principal) {
+        String email;
+        if (principal instanceof UserDetails) {
+            email = ((UserDetails) principal).getUsername();
+        } else if (principal instanceof Authentication) {
+            email = ((Authentication) principal).getName();
+        } else {
+            throw new RuntimeException("Principal non supporté");
+        }
+
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException(
-                        "Utilisateur introuvable : " + email))
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable : " + email))
                 .getId();
     }
 }

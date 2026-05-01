@@ -35,6 +35,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,7 +43,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Transactional(readOnly = true)
 public class PsychologistService {
-
+    private final MedicalDocumentRepository  documentRepo;
     private final UserRepository userRepo;
     private final TimeSlotRepository timeSlotRepo;
     private final ConfidentialRecordRepository recordRepo;
@@ -426,9 +427,26 @@ public class PsychologistService {
                 .id(r.getId())
                 .studentId(r.getStudent().getId())
                 .studentName(r.getStudent().getUser().getFullName())
+
+                // 👈 LES CHAMPS MANQUANTS SONT AJOUTÉS ICI 👈
                 .sessionDate(r.getSessionDate())
+                .observations(r.getObservations())
                 .riskLevel(r.getRiskLevel())
+                .recommendations(r.getRecommendations())
                 .followUpRequired(r.getFollowUpRequired())
+                .nextSessionDate(r.getNextSessionDate())
+                .sessionDurationMinutes(r.getSessionDurationMinutes())
+                .interventions(r.getInterventions())
+                .studentProgress(r.getStudentProgress())
+
+                // Si ton entité 'StudentProfile' contient ces infos, décommente :
+                // .studentDepartment(r.getStudent().getDepartment())
+                // .studentLevel(String.valueOf(r.getStudent().getLevel()))
+
+                // Si 'BaseEntity' te donne accès aux dates de création, décommente :
+                // .createdAt(r.getCreatedAt())
+                // .updatedAt(r.getUpdatedAt())
+
                 .build();
     }
 
@@ -437,9 +455,88 @@ public class PsychologistService {
         return MedicalDocumentResponse.builder()
                 .id(doc.getId())
                 .fileName(doc.getFileName()) // Adapte "getTitle()" si le nom est "getFileName()" dans ton entité
-                .status(doc.getStatus())
+                .status(String.valueOf(doc.getStatus()))
                 .rejectionReason(doc.getRejectionReason())
                 //.createdAt(doc.getCreatedAt()) // Ajoute le mapping de la date si nécessaire
                 .build();
+    }
+    public List<MedicalDocumentResponse> getPendingDocuments() {
+        return documentRepo.findByStatusOrderByCreatedAtAsc(
+                        DocStatus.PENDING, Pageable.unpaged())
+                .stream()
+                .map(this::toDocumentResponse)
+                .toList();
+    }
+
+    @Transactional
+    public MedicalDocumentResponse validateDocument(Long docId, Long agentId) {
+        MedicalDocument doc = documentRepo.findById(docId)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Document introuvable : " + docId));
+
+        if (!doc.isPending()) {
+            throw new IllegalStateException(
+                    "Ce document a déjà été traité (statut : " + doc.getStatus() + ")");
+        }
+
+        User agent = userRepo.findById(agentId)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Agent introuvable : " + agentId));
+
+        // ✅ utilise la méthode de ton amie directement
+        doc.validate(agent);
+        documentRepo.save(doc);
+
+        log.info("✅ Document {} validé par l'agent {}", docId, agentId);
+        return toDocumentResponse(doc);
+    }
+
+    @Transactional
+    public MedicalDocumentResponse rejectDocument(Long docId,
+                                                  String reason,
+                                                  Long agentId) {
+        MedicalDocument doc = documentRepo.findById(docId)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Document introuvable : " + docId));
+
+        if (!doc.isPending()) {
+            throw new IllegalStateException(
+                    "Ce document a déjà été traité (statut : " + doc.getStatus() + ")");
+        }
+
+        User agent = userRepo.findById(agentId)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Agent introuvable : " + agentId));
+
+        // ✅ utilise la méthode de ton amie directement
+        doc.reject(agent, reason);
+        documentRepo.save(doc);
+
+        log.info("❌ Document {} rejeté par l'agent {}. Motif : {}", docId, agentId, reason);
+        return toDocumentResponse(doc);
+    }
+    private MedicalDocumentResponse toDocumentResponse(MedicalDocument d) {
+        String studentName = d.getStudent().getUser().getFirstName()
+                + " " + d.getStudent().getUser().getLastName();
+        return MedicalDocumentResponse.builder()
+                .id(d.getId())
+                .studentId(d.getStudent().getId())
+                .studentName(studentName)
+                .fileName(d.getFileName())
+                .fileType(d.getMimeType())
+                .fileSize(d.getFileSize())
+                .status(String.valueOf(d.getStatus()))
+                .rejectionReason(d.getRejectionReason())
+                .createdAt(d.getCreatedAt())
+                .validationDate(d.getValidationDate())
+                .build();
+    }
+    public List<MedicalDocumentResponse> getStudentDocuments(Long studentId) {
+        // ❌ Ne pas utiliser findByStudentIdAndStatus(studentId, "PENDING")
+        // ✅ Utiliser une méthode qui prend tout l'historique de l'étudiant
+        return medicalDocumentRepository.findByStudentIdOrderByCreatedAtDesc(studentId)
+                .stream()
+                .map(this::mapToMedicalDocumentResponse)
+                .toList();
     }
 }

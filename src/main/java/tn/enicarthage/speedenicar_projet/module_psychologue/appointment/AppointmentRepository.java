@@ -77,4 +77,5 @@ Page<Appointment> findByStudentIdAndDeletedFalseOrderByDateTimeDesc(
             "JOIN FETCH a.psychologist " +
             "WHERE s.id = :studentId")
     Page<Appointment> findByStudentIdOrderByDateTimeDesc(@Param("studentId") Long studentId, Pageable pageable);
+    long countByStatus(String status);
 }

@@ -34,7 +34,7 @@ import tn.enicarthage.speedenicar_projet.user.repository.UserRepository;
 @Transactional(readOnly = true)
 public class ScolarityService {
 
-    private final MedicalDocumentRepository  documentRepo;
+
     private final StudentProfileRepository   studentRepo;
     private final AbsenceRepository          absenceRepo;
     private final AcademicRecordRepository   academicRepo;
@@ -90,61 +90,7 @@ public class ScolarityService {
     // DOCUMENTS MÉDICAUX
     // ════════════════════════════════════════════════════════
 
-    public List<MedicalDocumentResponse> getPendingDocuments() {
-        return documentRepo.findByStatusAndDeletedFalseOrderByCreatedAtAsc(
-                        DocStatus.PENDING, Pageable.unpaged())
-                .stream()
-                .map(this::toDocumentResponse)
-                .toList();
-    }
 
-    @Transactional
-    public MedicalDocumentResponse validateDocument(Long docId, Long agentId) {
-        MedicalDocument doc = documentRepo.findById(docId)
-                .orElseThrow(() -> new NoSuchElementException(
-                        "Document introuvable : " + docId));
-
-        if (!doc.isPending()) {
-            throw new IllegalStateException(
-                    "Ce document a déjà été traité (statut : " + doc.getStatus() + ")");
-        }
-
-        User agent = userRepo.findById(agentId)
-                .orElseThrow(() -> new NoSuchElementException(
-                        "Agent introuvable : " + agentId));
-
-        // ✅ utilise la méthode de ton amie directement
-        doc.validate(agent);
-        documentRepo.save(doc);
-
-        log.info("✅ Document {} validé par l'agent {}", docId, agentId);
-        return toDocumentResponse(doc);
-    }
-
-    @Transactional
-    public MedicalDocumentResponse rejectDocument(Long docId,
-                                                  String reason,
-                                                  Long agentId) {
-        MedicalDocument doc = documentRepo.findById(docId)
-                .orElseThrow(() -> new NoSuchElementException(
-                        "Document introuvable : " + docId));
-
-        if (!doc.isPending()) {
-            throw new IllegalStateException(
-                    "Ce document a déjà été traité (statut : " + doc.getStatus() + ")");
-        }
-
-        User agent = userRepo.findById(agentId)
-                .orElseThrow(() -> new NoSuchElementException(
-                        "Agent introuvable : " + agentId));
-
-        // ✅ utilise la méthode de ton amie directement
-        doc.reject(agent, reason);
-        documentRepo.save(doc);
-
-        log.info("❌ Document {} rejeté par l'agent {}. Motif : {}", docId, agentId, reason);
-        return toDocumentResponse(doc);
-    }
 
     // ════════════════════════════════════════════════════════
     // ABSENCES PROLONGÉES
@@ -262,9 +208,9 @@ public class ScolarityService {
                 .studentId(d.getStudent().getId())
                 .studentName(studentName)
                 .fileName(d.getFileName())
-                .fileType(d.getFileType())
+                .fileType(d.getMimeType())
                 .fileSize(d.getFileSize())
-                .status(d.getStatus())
+                .status(String.valueOf(d.getStatus()))
                 .rejectionReason(d.getRejectionReason())
                 .createdAt(d.getCreatedAt())
                 .validationDate(d.getValidationDate())

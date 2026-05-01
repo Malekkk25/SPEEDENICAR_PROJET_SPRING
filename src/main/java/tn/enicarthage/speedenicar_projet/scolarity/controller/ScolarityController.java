@@ -47,28 +47,7 @@ public class ScolarityController {
 
     // ── DOCUMENTS MÉDICAUX ───────────────────────────────────────
 
-    @GetMapping("/documents/pending")
-    public ResponseEntity<List<MedicalDocumentResponse>> getPending() {
-        return ResponseEntity.ok(service.getPendingDocuments());
-    }
 
-    @PutMapping("/documents/{id}/validate")
-    public ResponseEntity<MedicalDocumentResponse> validate(
-            @PathVariable Long id,
-            Authentication auth) {
-        Long agentId = getAgentId(auth);
-        return ResponseEntity.ok(service.validateDocument(id, agentId));
-    }
-
-    @PutMapping("/documents/{id}/reject")
-    public ResponseEntity<MedicalDocumentResponse> reject(
-            @PathVariable Long id,
-            @Valid @RequestBody RejectDocumentRequest request,
-            Authentication auth) {
-        Long agentId = getAgentId(auth);
-        return ResponseEntity.ok(
-                service.rejectDocument(id, request.getReason(), agentId));
-    }
 
     // ── ABSENCES PROLONGÉES ──────────────────────────────────────
 

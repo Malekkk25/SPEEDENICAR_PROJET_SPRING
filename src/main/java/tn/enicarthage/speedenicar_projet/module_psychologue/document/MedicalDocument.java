@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 // Si tu utilises @SuperBuilder dans BaseEntity, remplace @Builder par @SuperBuilder ici aussi
+import lombok.experimental.SuperBuilder;
 import tn.enicarthage.speedenicar_projet.common.BaseEntity;
 import tn.enicarthage.speedenicar_projet.common.enums.DocStatus;
 import tn.enicarthage.speedenicar_projet.student.entity.StudentProfile;
@@ -20,43 +21,38 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder // (Remplace par @SuperBuilder si BaseEntity utilise @SuperBuilder)
 public class MedicalDocument extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id", nullable = false)
     private StudentProfile student;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "uploaded_by", nullable = true)  // ← CHANGÉ !
+    private User uploadedBy;
+
     @NotBlank
     @Column(name = "file_name", nullable = false, length = 255)
     private String fileName;
 
-    @Column(name = "file_type", length = 50)
-    private String fileType;
+    @Column(name = "mime_type", length = 100)
+    private String mimeType;
 
     @NotBlank
     @Column(name = "file_path", nullable = false, length = 500)
-    private String filePath;
+    private String filePath;  // chemin relatif uniquement
 
     @Column(name = "file_size")
     private Long fileSize;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    @Builder.Default
+    @Column(nullable = false, length = 20)// ← avec @SuperBuilder
     private DocStatus status = DocStatus.PENDING;
 
-    /**
-     * Agent scolarité (ou psychologue) qui a validé/rejeté le document.
-     * Null tant que le document est PENDING.
-     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "validated_by")
     private User validatedBy;
 
-    // ❌ CORRECTION 1 : Enlever columnDefinition = "TEXT"
-    // Dans MySQL (ta base de prod) et H2 (ta base de test), LocalDateTime
-    // se mappe automatiquement en TIMESTAMP. Le forcer en TEXT cause des bugs de lecture.
     @Column(name = "validation_date")
     private LocalDateTime validationDate;
 
