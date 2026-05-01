@@ -414,6 +414,7 @@ public class PsychologistService {
                 .studentName(a.getStudent().getUser().getFullName())
                 .studentDepartment(a.getStudent().getDepartment())
                 .psychologistId(a.getPsychologist().getId())
+                .locationType(String.valueOf(a.getLocationType()))
                 // 👈 CORRECTION DU BUG ICI : On récupère bien le nom du Psy et non de l'étudiant
                 .psychologistName(a.getPsychologist().getFullName())
                 .dateTime(a.getDateTime())

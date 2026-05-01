@@ -26,4 +26,5 @@ public class AppointmentResponse {
     private String notes;
     private String cancellationReason;
     private LocalDateTime createdAt;
+    private String locationType;
 }

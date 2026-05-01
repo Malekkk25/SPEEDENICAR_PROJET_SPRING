@@ -7,6 +7,7 @@ import lombok.*;
 import tn.enicarthage.speedenicar_projet.common.BaseEntity;
 import tn.enicarthage.speedenicar_projet.common.enums.AppointmentStatus;
 import tn.enicarthage.speedenicar_projet.common.enums.AppointmentType;
+import tn.enicarthage.speedenicar_projet.common.enums.LocationType;
 import tn.enicarthage.speedenicar_projet.student.entity.StudentProfile;
 import tn.enicarthage.speedenicar_projet.user.entity.User;
 
@@ -43,7 +44,11 @@ public class Appointment extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private Integer duration = 30;
-
+    // Dans tn.enicarthage.speedenicar_projet.module_psychologue.appointment.Appointment
+    @Column(name = "location_type")
+    @Enumerated(EnumType.STRING)
+    private LocationType locationType;
+    // (Ou private String locationType; si tu n'utilises pas d'Enum)
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
