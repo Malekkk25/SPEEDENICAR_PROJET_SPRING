@@ -19,13 +19,9 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
-    public void configureMessageBroker(MessageBrokerRegistry config) {
-        // Broker pour les topics (notifications existantes + signaling vidéo)
-        config.enableSimpleBroker("/topic", "/queue");
-        // Préfixe pour les messages envoyés par les clients vers le serveur
-        config.setApplicationDestinationPrefixes("/app");
-        // Préfixe pour les messages destinés à un utilisateur spécifique
-        config.setUserDestinationPrefix("/user");
+    public void configureMessageBroker(MessageBrokerRegistry registry) {
+        registry.enableSimpleBroker("/topic");
+        registry.setApplicationDestinationPrefixes("/app"); // ← obligatoire
     }
 
     @Override
@@ -34,16 +30,4 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
     }
-
-    /*
-     * ─── Topics WebRTC ──────────────────────────────────────────────────────────
-     *
-     * /app/signal/{roomId}            → VideoSignalingController.handleSignal()
-     * /topic/room/{roomId}            → Broadcast à tous les participants
-     * /topic/room/{roomId}/user/{id}  → Message privé (peer-present)
-     *
-     * ─── Topics Notifications (existant) ───────────────────────────────────────
-     *
-     * /topic/notifications/{userId}   → Notifications générales
-     */
 }

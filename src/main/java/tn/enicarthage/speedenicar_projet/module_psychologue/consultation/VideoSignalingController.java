@@ -30,92 +30,67 @@ import java.util.concurrent.ConcurrentHashMap;
 public class VideoSignalingController {
 
     private final SimpMessagingTemplate messagingTemplate;
-    private final ConsultationSessionRepository sessionRepository;
 
-    /**
-     * Participants actifs par room : roomId → Set<senderId>
-     * Utilisé pour savoir si un peer est déjà présent.
-     */
-    private final Map<String, Map<String, String>> roomParticipants = new ConcurrentHashMap<>();
+    // Stocke les participants par roomId en mémoire
+    // clé = roomId, valeur = Map<senderId, displayName>
+    private final Map<String, Map<String, String>> rooms = new ConcurrentHashMap<>();
 
-    /**
-     * Envoi d'un message de signaling WebRTC.
-     * Destination cliente : /app/signal/{roomId}
-     * Broadcast vers     : /topic/room/{roomId}
-     */
     @MessageMapping("/signal/{roomId}")
-    public void handleSignal(
-            @DestinationVariable String roomId,
-            @Payload ConsultationDto.SignalMessage message,
-            Authentication auth) {
+    public void handleSignal(@DestinationVariable String roomId,
+                             ConsultationDto.SignalMessage signal) {
 
-        // Vérifier que la room existe
-        if (sessionRepository.findByRoomId(roomId).isEmpty()) {
-            log.warn("Signal reçu pour une room inexistante: {}", roomId);
-            return;
+        String senderId = signal.getSenderId();
+        log.info("Signal reçu - room: {} | type: {} | sender: {}", roomId, signal.getType(), senderId);
+
+        switch (signal.getType()) {
+
+            case "join" -> {
+                Map<String, String> participants = rooms.computeIfAbsent(roomId, k -> new ConcurrentHashMap<>());
+
+                // ✅ LOG 1 — voir ce que le serveur reçoit exactement
+                log.info("JOIN reçu - senderId: '{}' | payload: '{}' | participants actuels: {}",
+                        senderId, signal.getPayload(), participants.keySet());
+
+                if (!participants.isEmpty()) {
+                    Map.Entry<String, String> existing = participants.entrySet().iterator().next();
+
+                    // ✅ LOG 2 — voir vers quel canal on envoie peer-present
+                    String privateChannel = "/topic/room/" + roomId + "/user/" + senderId;
+                    log.info("Envoi peer-present vers: {}", privateChannel);
+
+                    Map<String, String> peerPresentPayload = Map.of(
+                            "peerId", existing.getKey(),
+                            "peerName", existing.getValue()
+                    );
+
+                    ConsultationDto.SignalMessage peerPresent = new ConsultationDto.SignalMessage();
+                    peerPresent.setType("peer-present");
+                    peerPresent.setRoomId(roomId);
+                    peerPresent.setSenderId("server");
+                    peerPresent.setPayload(peerPresentPayload);
+
+                    messagingTemplate.convertAndSend(privateChannel, peerPresent);
+                }
+
+                messagingTemplate.convertAndSend("/topic/room/" + roomId, signal);
+                participants.put(senderId, String.valueOf(signal.getPayload()));
+                log.info("Participants après ajout: {}", participants);
+            }
+            case "leave" -> {
+                // Retirer le participant
+                Map<String, String> participants = rooms.get(roomId);
+                if (participants != null) {
+                    participants.remove(senderId);
+                    if (participants.isEmpty()) {
+                        rooms.remove(roomId); // Nettoyer la room vide
+                    }
+                }
+                // Broadcaster le départ
+                messagingTemplate.convertAndSend("/topic/room/" + roomId, signal);
+                log.info("Participant {} a quitté room {}", senderId, roomId);
+            }
+
+            // offer, answer, ice-candidate → simple relay à toute la room
+            default -> messagingTemplate.convertAndSend("/topic/room/" + roomId, signal);
         }
-
-        message.setRoomId(roomId);
-        String senderId = auth.getName(); // email ou username JWT
-        message.setSenderId(senderId);
-
-        log.debug("Signal [{}] dans room {} de {}", message.getType(), roomId, senderId);
-
-        switch (message.getType()) {
-            case "join" -> handleJoin(roomId, senderId, message);
-            case "leave" -> handleLeave(roomId, senderId, message);
-            // offer, answer, ice-candidate → relayés directement
-            default -> broadcast(roomId, message, senderId);
-        }
-    }
-
-    private void handleJoin(String roomId, String senderId, ConsultationDto.SignalMessage message) {
-        roomParticipants.computeIfAbsent(roomId, k -> new ConcurrentHashMap<>());
-        Map<String, String> participants = roomParticipants.get(roomId);
-
-        boolean peerPresent = !participants.isEmpty();
-        String peerId = participants.keySet().stream().findFirst().orElse(null);
-        String peerName = peerId != null ? participants.get(peerId) : null;
-
-        // Enregistrer ce participant
-        String displayName = message.getPayload() != null ? message.getPayload().toString() : senderId;
-        participants.put(senderId, displayName);
-
-        // Informer les autres qu'un nouveau participant a rejoint
-        broadcast(roomId, message, senderId);
-
-        // Envoyer en retour si un peer est déjà là (pour déclencher l'offer WebRTC)
-        if (peerPresent) {
-            ConsultationDto.SignalMessage readyMsg = new ConsultationDto.SignalMessage();
-            readyMsg.setType("peer-present");
-            readyMsg.setRoomId(roomId);
-            readyMsg.setSenderId("server");
-            readyMsg.setPayload(Map.of("peerId", peerId, "peerName", peerName != null ? peerName : ""));
-
-            messagingTemplate.convertAndSend(
-                    "/topic/room/" + roomId + "/user/" + senderId,
-                    readyMsg
-            );
-        }
-
-        log.info("Participant {} a rejoint la room {}. Participants: {}", senderId, roomId, participants.size());
-    }
-
-    private void handleLeave(String roomId, String senderId, ConsultationDto.SignalMessage message) {
-        Map<String, String> participants = roomParticipants.getOrDefault(roomId, new ConcurrentHashMap<>());
-        participants.remove(senderId);
-
-        if (participants.isEmpty()) {
-            roomParticipants.remove(roomId);
-        }
-
-        broadcast(roomId, message, senderId);
-        log.info("Participant {} a quitté la room {}", senderId, roomId);
-    }
-
-    /**
-     * Broadcast à tous les participants de la room SAUF l'expéditeur.
-     */
-    private void broadcast(String roomId, ConsultationDto.SignalMessage message, String senderId) {
-        messagingTemplate.convertAndSend("/topic/room/" + roomId, message);
     }}

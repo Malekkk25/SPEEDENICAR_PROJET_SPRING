@@ -1,7 +1,6 @@
 package tn.enicarthage.speedenicar_projet.module_psychologue.consultation;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -40,12 +39,14 @@ public class ConsultationDto {
 
     // ─── WebRTC Signaling Messages (via WebSocket) ─────────────────────────────
 
-    @Data
+    @Getter
+    @Setter @NoArgsConstructor
+    @AllArgsConstructor
     public static class SignalMessage {
-        private String type;   // "offer" | "answer" | "ice-candidate" | "join" | "leave" | "ready"
+        private String type;
         private String roomId;
         private String senderId;
-        private Object payload; // SDP offer/answer ou ICE candidate
+        private Object payload; // RTCSessionDescription, RTCIceCandidate, String, ou Map
     }
 
     @Data
